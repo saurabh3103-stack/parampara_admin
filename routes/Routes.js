@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authenticateToken = require('../middlewares/authMiddleware');  // Import the middleware
 const { createUser, getUsers } = require('../controllers/userController');
 const { createlocation,getlocation } = require('../controllers/locationController');
 const { createAdmin,getAdmin } = require('../controllers/adminController');
@@ -9,18 +10,18 @@ const { createPoojaSamagri,getPoojaSamaagri } = require('../controllers/poojaSam
 
 
 // Define all routes
-router.post('/admin/',createAdmin);
-router.get('/admin/',getAdmin);
-router.post('/user/', createUser);
-router.get('/user/', getUsers);
-router.post('/location/',createlocation);
-router.get('/location/',getlocation);
-router.get('/pooja/',getPooja);
-router.post('/pooja/',createPooja);
-router.get('/pooja/category',getPoojaCategory);
-router.post('/pooja/category',createPoojaCategory);
-router.get('/pooja/samagri',getPoojaSamaagri);
-router.post('/pooja/samagri',createPoojaSamagri);
+router.post('/admin/',authenticateToken,createAdmin);
+router.get('/admin/',authenticateToken,getAdmin);
+router.post('/user/',authenticateToken, createUser);
+router.get('/user/',authenticateToken, getUsers);
+router.post('/location/',authenticateToken,createlocation);
+router.get('/location/',authenticateToken,getlocation);
+router.get('/pooja/',authenticateToken,getPooja);
+router.post('/pooja/',authenticateToken,createPooja);
+router.get('/pooja/category',authenticateToken,getPoojaCategory);
+router.post('/pooja/category',authenticateToken,createPoojaCategory);
+router.get('/pooja/samagri',authenticateToken,getPoojaSamaagri);
+router.post('/pooja/samagri',authenticateToken,createPoojaSamagri);
 
 
 module.exports = router;

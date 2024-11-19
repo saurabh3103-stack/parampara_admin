@@ -1,10 +1,15 @@
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const Routes = require('./routes/Routes');
 const errorHandler = require('./utils/errorHandler');
 dotenv.config();  // Load environment variables
+
 const app = express();
+app.use(cors());
 
 // Use the appropriate URI
 const mongoURI = process.env.MONGODB_URI;

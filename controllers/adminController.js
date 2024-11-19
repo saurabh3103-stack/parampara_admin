@@ -1,29 +1,34 @@
-const User = require('../models/adminModel');
+const User = require('../models/adminModel'); // Ensure correct model is imported
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10; // Define the number of salt rounds for hashing
 
-// Create a new user
+// Create a new admin
 exports.createAdmin = async (req, res) => {
   try {
-    const newAdmin = new Admin(req.body);
+    // Hash the password before saving
+    const { password, ...otherFields } = req.body;
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    console.log(hashedPassword);
+    // Create a new admin user with hashed password
+    const newAdmin = new User({
+      ...otherFields,
+      password: hashedPassword,
+    });
+
     await newAdmin.save();
-    res.status(201).json(newAdmin);
+    res.status(201).json({ message: 'Admin created successfully', newAdmin });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get all users
+// Get all admins
 exports.getAdmin = async (req, res) => {
-    try {
-      // Static data (mocked user data)
-      const users = [
-        { id: 1, name: 'John Doe', email: 'john@example.com' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
-        { id: 3, name: 'Sam Green', email: 'sam@example.com' }
-      ];
-  
-      // Send the static data as JSON response
-      res.json(users);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };
+  try {
+    // Fetch all admin users from the database
+    const admins = await User.find(); // Adjust query if necessary (e.g., filter by role)
+    res.json(admins);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
