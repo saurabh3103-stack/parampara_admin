@@ -16,6 +16,9 @@ mongoose
   
 app.use(express.json());  
 
+app.get('/', (req, res) => {
+  res.send('Hello');
+});
 app.use('/api/', Routes);
 
 app.use(errorHandler);
