@@ -1,53 +1,47 @@
 const multer = require('multer');
 const path = require('path');
-const sliderCategory = require('../models/appSliderCategoryModel'); // Assuming this path
+const sliderCategory = require('../models/appSliderCategoryModel'); 
 
-// Set storage engine for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/sliderCategory/'); // Store images in 'uploads' folder
+    cb(null, 'uploads/sliderCategory/'); 
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Generate unique filename
+    cb(null, Date.now() + path.extname(file.originalname)); 
   },
 });
 
-// File filter for image files only (JPEG, PNG)
+
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
   if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);  // Accept file
+    cb(null, true);  
   } else {
-    cb(new Error('Invalid file type'), false);  // Reject file
+    cb(new Error('Invalid file type'), false); 
   }
 };
 
-// Initialize multer
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }  // Limit file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }  
 });
 
-// Upload image via a POST request to '/slider/create-category'
 exports.createSliderCategory = [
-  upload.single('image'),  // Handle single image upload with field name 'image'
+  upload.single('image'),  
   async (req, res) => {
     try {
-      // Check if a file is uploaded
       if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded', status: 0 });
       }
 
-      // Create a new slider category object
       const newSliderCategory = new sliderCategory({
         name: req.body.name,
-        image: '/uploads/sliderCategory/' + req.file.filename,  // Correctly reference req.file.filename
-        status: req.body.status || 'active',  // Optional field
+        image: '/uploads/sliderCategory/' + req.file.filename,  
+        status: req.body.status || 'active',  
         updated_at: Date.now(),
       });
 
-      // Save the new slider category to the database
       await newSliderCategory.save();
       res.status(200).json({ message: 'Slider Category Added', status: 1 });
     } catch (error) {
