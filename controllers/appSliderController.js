@@ -35,6 +35,11 @@ exports.createSlider = [
     upload.single('image'),  // Corrected to pass 'image' string here
     async (req, res) => {
         try {
+            // Check if the file exists
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded', status: 0 });
+            }
+
             // Creating a new slider with the provided data
             const addSlider = new Slider({
                 name: req.body.name,
@@ -52,6 +57,7 @@ exports.createSlider = [
         }
     }
 ];
+
 
 // Fetch all sliders
 exports.getSlider = async (req, res) => {
