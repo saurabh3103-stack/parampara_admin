@@ -26,14 +26,14 @@ router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
 router.get('/pooja/', authenticateToken, getPooja);
 router.post('/pooja/', authenticateToken, createPooja);
-router.get('/pooja/category', authenticateToken, getPoojaCategory);
-router.post('/pooja/category', authenticateToken, createPoojaCategory);
-router.get('/pooja/samagri', authenticateToken, getPoojaSamaagri);
-router.post('/pooja/samagri', authenticateToken, createPoojaSamagri);
-router.post('/slider/create-category',authenticateToken,createSliderCategory);
-router.get('/slider/all-category',authenticateToken,getSliderCategory);
-router.post('/slider/create-slider',authenticateToken,createSlider);
-router.get('/slider/all-slider',authenticateToken,getSlider);
+router.get('/pooja/category/', authenticateToken, getPoojaCategory);
+router.post('/pooja/category/', authenticateToken, createPoojaCategory);
+router.get('/pooja/samagri/', authenticateToken, getPoojaSamaagri);
+router.post('/pooja/samagri/', authenticateToken, createPoojaSamagri);
+router.post('/slider/create-category/',authenticateToken,createSliderCategory);
+router.get('/slider/all-category/',authenticateToken,getSliderCategory);
+router.post('/slider/create-slider/',authenticateToken,createSlider);
+router.get('/slider/all-slider/',authenticateToken,getSlider);
 
 
 
