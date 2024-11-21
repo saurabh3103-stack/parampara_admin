@@ -9,7 +9,7 @@ const errorHandler = require('./utils/errorHandler');
 dotenv.config();  // Load environment variables
 
 const app = express();
-app.use(cors());
+app.use(cors({origin:'*'}));
 
 // Use the appropriate URI
 const mongoURI = process.env.MONGODB_URI;
