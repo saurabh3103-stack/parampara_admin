@@ -12,7 +12,8 @@ const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory } = require('../controllers/poojaCategoryController');
 const { createPooja, getPooja } = require('../controllers/poojaController');
 const { createPoojaSamagri, getPoojaSamaagri } = require('../controllers/poojaSamagriController');
-
+const { createSliderCategory,getSliderCategory } = require('../controllers/appSliderCategoryController');
+const { createSlider,getSlider } = require('../controllers/appSliderController');
 
 // Define other routes (existing ones)
 router.post('/signin', signin);
@@ -29,6 +30,12 @@ router.get('/pooja/category', authenticateToken, getPoojaCategory);
 router.post('/pooja/category', authenticateToken, createPoojaCategory);
 router.get('/pooja/samagri', authenticateToken, getPoojaSamaagri);
 router.post('/pooja/samagri', authenticateToken, createPoojaSamagri);
+router.post('/slider/create-category',authenticateToken,createSliderCategory);
+router.get('slider/all-category',authenticateToken,getSliderCategory);
+router.post('slider/create-slider',authenticateToken,createSlider);
+router.get('slider/all-slider',authenticateToken,getSlider);
+
+
 
 module.exports = router;
 
