@@ -1,6 +1,6 @@
 const multer = require('multer');
 const path = require('path');
-const sliderCategory = require('../models/appsliderCategory'); // Assuming this path
+const sliderCategory = require('../models/appSliderCategoryModel'); // Assuming this path
 
 // Set storage engine for multer
 const storage = multer.diskStorage({
