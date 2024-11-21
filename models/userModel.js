@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   longitude: { type: Number },
   latitude: { type: Number },
   password: { type: String, required: true },
-  alternate_no: { type: String,, default: null },
+  alternate_no: { type: String, default: null },
   gender: { type: String, enum: ['male', 'female', 'other'] },
   city: { type: String },
   state: { type: String },

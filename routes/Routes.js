@@ -18,8 +18,8 @@ const { createPoojaSamagri, getPoojaSamaagri } = require('../controllers/poojaSa
 router.post('/signin', signin);
 router.post('/admin/', authenticateToken, createAdmin);
 router.get('/admin/', authenticateToken, getAdmin);
-router.post('/user/', authenticateToken, createUser);
-router.get('/user/', authenticateToken, getUsers);
+router.post('/user/create-user', authenticateToken, createUser);
+router.get('/user/all-user', authenticateToken, getUsers);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
 router.get('/pooja/', authenticateToken, getPooja);
