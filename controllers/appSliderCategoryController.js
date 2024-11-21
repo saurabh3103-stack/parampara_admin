@@ -58,7 +58,7 @@ exports.createSliderCategory = [
 
 exports.getSliderCategory= async(req,res)=>{
     try{
-        const SliderCategory= await SliderCategory.find();
+        const SliderCategory= await sliderCategory.find();
         res.json({message:'All Slider Category',status:1,data:SliderCategory});
     }
     catch(error){
