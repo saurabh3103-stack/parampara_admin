@@ -1,44 +1,35 @@
 const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
-
-dotenv.config();
-
-const SECRET = process.env.JWT_SECRET || "superSuperSecret"; // Use environment variable for the secret key
-
-const authenticateToken = (req, res, next) => {
-  // Retrieve token from multiple possible sources
-  const token =
-    req.body.token ||
-    req.query.token ||
-    req.headers["x-access-token"] ||
-    (req.header("Authorization") && req.header("Authorization").split(" ")[1]);
-
-  if (!token) {
-    return res.status(403).json({
-      success: false,
-      message: "No token provided",
-    });
-  }
-
-  try {
-    console.log("Token received: ", token); // Log token for debugging
-    console.log("Using secret: ", SECRET); // Debug: Verify the secret being used
-
-    // Decode and verify the token using the secret key
-    const decode = jwt.sign(token, SECRET);
-
-    const decoded = jwt.verify(decode, SECRET);
-    console.log("Decoded token: ", decoded); // Log decoded information
-    req.user = decoded; // Attach decoded user info to the request object
-    next(); // Call the next middleware or route handler
-  } catch (err) {
-    console.error("JWT Error: ", err.message); // Log specific error for debugging
-    return res.status(400).json({
-      success: false,
-      message: "Invalid token",
-      error: err.message,
-    });
+const dotenv = require('dotenv');
+dotenv.config();  // Load environment variables
+const SECRET = process.env.JWT_SECRET;
+const signin = (req, res) => {
+  const { username, password } = req.body;
+  if (username === "Shivanshu" && password === "Parampara@2024") {
+    const token = jwt.sign({ username }, SECRET);
+    console.log("Generated JWT Token:", token);
+    res.json({ message: "Sign-in successful", token });
+  } else {
+    res.status(401).json({ message: "Invalid username or password" });
   }
 };
+const authenticateToken = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
-module.exports = authenticateToken;
+  if (!token) {
+    return res.status(401).json({ message: "Authorization token is required." });
+  }
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    return res.status(401).json({ message: "Invalid token." });
+  }
+};
+module.exports = { authenticateToken, signin };
+
+
+
+// Auth Tokken
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlNoaXZhbnNodSIsImlhdCI6MTczMjE2NTMzOX0.YDu6P4alpQB5QL-74z1jO4LGfEwZA_n_Y29o512FrM8
