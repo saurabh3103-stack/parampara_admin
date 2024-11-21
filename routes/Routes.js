@@ -6,7 +6,7 @@ const { signin, authenticateToken } = require('../middlewares/authMiddleware'); 
 // Route to handle sign-in and generate a JWT token
 
 // Import the middleware
-const { createUser, getUsers } = require('../controllers/userController');
+const { createUser, getUsers,loginUser } = require('../controllers/userController');
 const { createlocation, getlocation } = require('../controllers/locationController');
 const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory } = require('../controllers/poojaCategoryController');
@@ -20,6 +20,7 @@ router.post('/admin/', authenticateToken, createAdmin);
 router.get('/admin/', authenticateToken, getAdmin);
 router.post('/user/create-user', authenticateToken, createUser);
 router.get('/user/all-user', authenticateToken, getUsers);
+router.post('/user/login',authenticateToken, loginUser);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
 router.get('/pooja/', authenticateToken, getPooja);
