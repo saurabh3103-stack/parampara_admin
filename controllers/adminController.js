@@ -1,5 +1,5 @@
 const User = require('../models/adminModel'); // Ensure correct model is imported
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const SALT_ROUNDS = 10; // Define the number of salt rounds for hashing
 
 // Create a new admin
@@ -7,7 +7,7 @@ exports.createAdmin = async (req, res) => {
   try {
     // Hash the password before saving
     const { password, ...otherFields } = req.body;
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log(hashedPassword);
     // Create a new admin user with hashed password
     const newAdmin = new User({
