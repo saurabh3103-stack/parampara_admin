@@ -21,19 +21,11 @@ exports.createUser = async (req, res) => {
 };
 
 
-// Get all users
 exports.getUsers = async (req, res) => {
-    try {
-      // Static data (mocked user data)
-      const users = [
-        { id: 1, name: 'John Doe', email: 'john@example.com' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
-        { id: 3, name: 'Sam Green', email: 'sam@example.com' }
-      ];
-  
-      // Send the static data as JSON response
-      res.json(users);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };
+  try {
+    const users = await User.find();  
+    res.json({message:'User Data', status:1, data:users});
+  } catch (error) {
+    res.status(500).json({ message: error.message,status:0 });
+  }
+};
