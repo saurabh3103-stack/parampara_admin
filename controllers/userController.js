@@ -11,23 +11,22 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname)); 
   },
 });
-
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
   if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true); // Accept the file
+    cb(null, true); 
   } else {
-    cb(new Error('Invalid file type'), false); // Reject the file
+    cb(new Error('Invalid file type'), false); 
   }
 };
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },  // Maximum file size: 5 MB
+  limits: { fileSize: 5 * 1024 * 1024 }, 
 });
 
 exports.createUser = [
-  upload.single('image'),  // Middleware to handle single file upload (image)
+  upload.single('image'),  
   async (req, res) => {
     try {
       const { password, ...otherDetails } = req.body;
@@ -37,12 +36,12 @@ exports.createUser = [
 
       let imagePath = null;
       if (req.file) {
-        imagePath = '/uploads/userImages/' + req.file.filename;  // Save relative path of uploaded image
+        imagePath = '/uploads/userImages/' + req.file.filename;  
       }
       const newUser = new User({
         ...otherDetails,
         password: hashedPassword,
-        image: imagePath,  szs
+        image: imagePath,  
       });
 
       await newUser.save();
