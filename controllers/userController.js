@@ -14,9 +14,9 @@ exports.createUser = async (req, res) => {
     const userResponse = newUser.toObject();
     delete userResponse.password;
 
-    res.status(201).json(userResponse);
+    res.status(201).json({message:'User add', status:1, data : userResponse});
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message,status:0 });
   }
 };
 
