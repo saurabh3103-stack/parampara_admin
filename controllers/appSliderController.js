@@ -39,7 +39,7 @@ exports.createSlider = [
             const addSlider = new Slider({
                 name: req.body.name,
                 category: req.body.category,
-                image: req.file ? '/uploads/slider/' + req.file.filename : null,
+                image: '/uploads/slider/' + req.file.filename,
                 status: req.body.status || 'active',
                 updated_at: Date.now(),
             });

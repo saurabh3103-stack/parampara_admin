@@ -5,7 +5,7 @@ const sliderCategory = require('../models/appSliderCategoryModel'); // Assuming 
 // Set storage engine for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Store images in 'uploads' folder
+    cb(null, 'uploads/sliderCategory/'); // Store images in 'uploads' folder
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // Generate unique filename
@@ -42,7 +42,7 @@ exports.createSliderCategory = [
       // Create a new slider category object
       const newSliderCategory = new sliderCategory({
         name: req.body.name,
-        image: '/uploads/' + req.file.filename,  // Correctly reference req.file.filename
+        image: '/uploads/sliderCategory/' + req.file.filename,  // Correctly reference req.file.filename
         status: req.body.status || 'active',  // Optional field
         updated_at: Date.now(),
       });
