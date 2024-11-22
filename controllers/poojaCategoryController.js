@@ -4,7 +4,7 @@ const PoojaCategory = require('../models/PoojaCategory');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, 'uploads/userImages/');  
+      cb(null, 'uploads/poojaCategory/');  
     },
     filename: (req, file, cb) => {
       cb(null, Date.now() + path.extname(file.originalname)); 
@@ -24,26 +24,32 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }, 
 });
   
-exports.createPoojaCategory=[  
-    upload.single('image'),  
-    async(req,res)=>{
-    try{
-        const {...poojaCategoryDetails}=req.body;
+exports.createPoojaCategory = [
+    upload.single('pooja_image'), 
+    async (req, res) => {
+      try {
+        const { ...poojaCategoryDetails } = req.body;
         let imagePath = null;
+  
         if (req.file) {
-            imagePath = '/uploads/userImages/' + req.file.filename;  
+          imagePath = '/uploads/poojaCategory/' + req.file.filename;
+        } else {
+          return res.status(400).json({ message: 'Pooja Category image is required',status:0});
         }
-        const addPoojacategory= new PoojaCategory({
-            ...poojaCategoryDetails,
-            image:imagePath,
+  
+        const addPoojacategory = new PoojaCategory({
+          ...poojaCategoryDetails,
+          pooja_image: imagePath,
         });
+  
         await addPoojacategory.save();
-        res.status(201).json(addPoojacategory);
-    }
-    catch ( error ){
-        res.status(500).json({message:error.message});
-    }
-}];
+        res.status(200).json({ message: 'Pooja category created successfully', data: addPoojacategory,status:1 });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    },
+];
+  
 
 exports.getPoojaCategory = async(req, res) => {
     try{
