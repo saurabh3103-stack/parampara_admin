@@ -1,73 +1,62 @@
 const multer = require('multer');
+const Slider = require('../models/appSliderModel');
 const path = require('path');
 const fs = require('fs');
-const PoojaCategory = require('../models/PoojaCategory');
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(__dirname, '../public/uploads/poojaCategory');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true }); // Create the folder and any necessary parent directories
-}
+// Multer memory storage configuration (saving image in memory as a buffer)
+const storage = multer.memoryStorage();
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);  
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); 
-    },
-});
-
-// File filter for image validation
+// File filter to allow only certain image types
 const fileFilter = (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true); 
+        cb(null, true);
     } else {
-        cb(new Error('Invalid file type'), false); 
+        cb(new Error('Invalid file type'), false);
     }
 };
 
-// Multer configuration
+// Multer upload configuration
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 }, 
+    limits: { fileSize: 5 * 1024 * 1024 } // Limit to 5MB
 });
 
-// Create Pooja Category
-exports.createPoojaCategory = [
-    upload.single('pooja_image'), 
+// Create Slider with base64 image
+exports.createSlider = [
+    upload.single('image'),
     async (req, res) => {
         try {
-            const { ...poojaCategoryDetails } = req.body;
-            let imagePath = null;
-
-            if (req.file) {
-                imagePath = '/uploads/poojaCategory/' + req.file.filename;
-            } else {
-                return res.status(400).json({ message: 'Pooja Category image is required', status: 0 });
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded', status: 0 });
             }
 
-            const addPoojacategory = new PoojaCategory({
-                ...poojaCategoryDetails,
-                pooja_image: imagePath,
+            // Convert image to base64 string
+            const base64Image = req.file.buffer.toString('base64');
+
+            // Create new Slider entry
+            const addSlider = new Slider({
+                name: req.body.name,
+                category: req.body.category,
+                image: base64Image, // Save base64 string of the image
+                status: req.body.status || 'active',
+                updated_at: Date.now(),
             });
 
-            await addPoojacategory.save();
-            res.status(200).json({ message: 'Pooja category created successfully', data: addPoojacategory, status: 1 });
+            await addSlider.save();
+            res.status(200).json({ message: 'Slider Created', status: 1 });
         } catch (error) {
             res.status(500).json({ message: error.message, status: 0 });
         }
-    },
+    }
 ];
 
-// Get Pooja Categories
-exports.getPoojaCategory = async (req, res) => {
+// Get Slider data with image in base64
+exports.getSlider = async (req, res) => {
     try {
-        const poojaCategory = await PoojaCategory.find();
-        res.json({ message: 'Pooja Category Data', status: 1, data: poojaCategory });
+        const sliders = await Slider.find();  
+        res.json({ message: 'All Sliders', status: 1, data: sliders });
     } catch (error) {
         res.status(500).json({ message: error.message, status: 0 });
     }
