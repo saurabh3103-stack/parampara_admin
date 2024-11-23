@@ -1,17 +1,10 @@
 const multer = require('multer');
 const path = require('path');
-const cloudinary = require('cloudinary').v2;  // Only if using Cloudinary for cloud storage
+const cloudinary = require('cloudinary').v2;  // Cloudinary for cloud storage
 const sliderCategory = require('../models/appSliderCategoryModel');
 
-// Multer storage configuration for local file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/sliderCategory/');  // Local storage directory
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));  // Generate unique file name
-  },
-});
+// Multer storage configuration (in memory storage for Cloudinary)
+const storage = multer.memoryStorage();
 
 // File filter to only allow specific types of images
 const fileFilter = (req, file, cb) => {
@@ -31,7 +24,7 @@ const upload = multer({
 }).single('image');  // Expecting the field name as 'image'
 
 /**
- * Controller for creating a slider category (with local storage or Cloudinary).
+ * Controller for creating a slider category (using Cloudinary for image upload).
  */
 exports.createSliderCategory = [
   // Multer middleware to handle file upload
@@ -42,26 +35,27 @@ exports.createSliderCategory = [
         return res.status(400).json({ message: 'No image uploaded', status: 0 });
       }
 
-      // Option 1: Local file storage (if using local storage for images)
-      const imageUrl = '/uploads/sliderCategory/' + req.file.filename;
+      // Upload image to Cloudinary
+      cloudinary.uploader.upload_stream(
+        { resource_type: 'auto' },  // Automatically detect the resource type (image/video)
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ message: 'Error uploading to Cloudinary', error: error.message });
+          }
 
-      // Option 2: Cloudinary (if you want to upload to Cloudinary instead of local storage)
-      /*
-      const result = await cloudinary.uploader.upload(req.file.path);
-      const imageUrl = result.secure_url;  // Cloudinary URL for the uploaded image
-      */
+          // Create a new slider category
+          const newSliderCategory = new sliderCategory({
+            name: req.body.name,
+            image: result.secure_url,  // Cloudinary URL for the uploaded image
+            status: req.body.status || 'active',  // Default to 'active' if not provided
+            updated_at: Date.now(),
+          });
 
-      // Create a new slider category
-      const newSliderCategory = new sliderCategory({
-        name: req.body.name,
-        image: imageUrl,  // Store the image URL (local or Cloudinary)
-        status: req.body.status || 'active',  // Default to 'active' if not provided
-        updated_at: Date.now(),
-      });
-
-      // Save the new slider category to the database
-      await newSliderCategory.save();
-      res.status(200).json({ message: 'Slider Category Added', status: 1 });
+          // Save the new slider category to the database
+          await newSliderCategory.save();
+          res.status(200).json({ message: 'Slider Category Added', status: 1 });
+        }
+      ).end(req.file.buffer);  // Use the file buffer for upload
     } catch (error) {
       res.status(500).json({ message: 'Error creating slider: ' + error.message, status: 0 });
     }
