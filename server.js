@@ -20,6 +20,7 @@ mongoose
 
   
 app.use(express.json());  
+app.use(express.static(path.join(__dirname, 'uploads')));  // Serve static files (images)
 
 app.get('/', (req, res) => {
   res.send('Hello');
