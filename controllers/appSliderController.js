@@ -20,7 +20,7 @@ exports.createSlider = [
                 return res.status(400).json({ message: 'No file uploaded', status: 0 });
             }
 
-            // Upload image to Cloudinary
+            // Upload image buffer to Cloudinary
             const result = await cloudinary.uploader.upload_stream(
                 { resource_type: 'auto' }, // Automatically detect file type (image, video, etc.)
                 (error, result) => {
@@ -47,8 +47,8 @@ exports.createSlider = [
                 }
             );
 
-            // Pipe the file buffer into Cloudinary's upload stream
-            req.file.stream.pipe(result);
+            // Upload the file buffer to Cloudinary
+            result.end(req.file.buffer); // Send the buffer directly to Cloudinary
         } catch (error) {
             console.error('Error creating slider:', error);
             res.status(500).json({ message: error.message, status: 0 });
