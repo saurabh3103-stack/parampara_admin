@@ -9,9 +9,8 @@ const errorHandler = require('./utils/errorHandler');
 dotenv.config();  // Load environment variables
 const path = require('path');
 
-
 const app = express();
-app.use(cors({origin:'*'}));
+app.use(cors({ origin: '*' }));
 
 // Use the appropriate URI
 const mongoURI = process.env.MONGODB_URI;
@@ -20,16 +19,21 @@ mongoose
   .then(() => console.log('Connected to MongoDB server'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-  
-app.use(express.json());  
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'uploads')));  // Serve static files (images)
+// Middleware to parse JSON bodies
+app.use(express.json());
 
+// Static files (images)
+app.use(express.static(path.join(__dirname, 'uploads')));
+
+// Default route
 app.get('/', (req, res) => {
   res.send('Hello');
 });
+
+// API Routes
 app.use('/api/', Routes);
 
+// Error handler
 app.use(errorHandler);
 
 const PORT = 3000;
