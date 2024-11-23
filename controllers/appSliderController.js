@@ -3,8 +3,10 @@ const Slider = require('../models/appSliderModel');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure the upload directory exists
-const uploadDirectory = path.join(__dirname, '../public/upload/');
+// Use the writable `/tmp/` directory in serverless environments
+const uploadDirectory = path.join('/tmp/', 'upload/');
+
+// Ensure the directory exists
 if (!fs.existsSync(uploadDirectory)) {
     fs.mkdirSync(uploadDirectory, { recursive: true });
 }
@@ -12,11 +14,11 @@ if (!fs.existsSync(uploadDirectory)) {
 // Multer disk storage configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, uploadDirectory); // Save to 'public/upload/'
+        cb(null, uploadDirectory); // Save to `/tmp/upload/`
     },
     filename: (req, file, cb) => {
         const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
-        cb(null, uniqueName); // Unique file name
+        cb(null, uniqueName);
     }
 });
 
@@ -46,11 +48,11 @@ exports.createSlider = [
                 return res.status(400).json({ message: 'No file uploaded', status: 0 });
             }
 
-            // Save the relative path to the database
+            // Save the file path to the database
             const addSlider = new Slider({
                 name: req.body.name,
                 category: req.body.category,
-                image: `/upload/${req.file.filename}`, // Save relative path to the image
+                image: req.file.path, // Save the temporary file path
                 status: req.body.status || 'active',
                 updated_at: Date.now(),
             });
@@ -62,6 +64,7 @@ exports.createSlider = [
         }
     }
 ];
+
 
 // Get Slider data with image path
 exports.getSlider = async (req, res) => {
