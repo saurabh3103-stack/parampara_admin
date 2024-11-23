@@ -1,26 +1,24 @@
-const multer = require('multer');
 const Slider = require('../models/appSliderModel');
+const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Use the writable `/tmp/` directory in serverless environments
-const uploadDirectory = path.join('/tmp/', 'upload/');
 
-// Ensure the directory exists
-if (!fs.existsSync(uploadDirectory)) {
-    fs.mkdirSync(uploadDirectory, { recursive: true });
+const uploadedFolder = path.join(__dirname, '../src/assets/upload'); // Corrected path
+if (!fs.existsSync(uploadedFolder)) {
+    fs.mkdirSync(uploadedFolder, { recursive: true });
 }
 
 // Multer disk storage configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, uploadDirectory); // Save to `/tmp/upload/`
+        cb(null, uploadedFolder); // Save to the correct upload folder
     },
     filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
-        cb(null, uniqueName);
+        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
     }
 });
+
 
 // File filter to allow only certain image types
 const fileFilter = (req, file, cb) => {
