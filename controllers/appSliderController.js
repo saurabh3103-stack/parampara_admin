@@ -77,12 +77,3 @@ exports.getSlider = async (req, res) => {
     }
 };
 
-// Serve uploaded files (Ensure this is added to your route setup)
-app.get('/uploads/:filename', (req, res) => {
-    const filePath = path.join(uploadedFolder, req.params.filename);
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).json({ message: 'File not found' });
-    }
-});
