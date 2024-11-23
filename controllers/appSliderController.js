@@ -1,26 +1,43 @@
-const AWS = require('aws-sdk');
 const multer = require('multer');
 const Slider = require('../models/appSliderModel');
+const path = require('path');
+const fs = require('fs');
 
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-});
+// Ensure the upload directory exists
+const uploadDirectory = path.join(__dirname, '../public/upload/');
+if (!fs.existsSync(uploadDirectory)) {
+    fs.mkdirSync(uploadDirectory, { recursive: true });
+}
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type'), false);
-        }
+// Multer disk storage configuration
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDirectory); // Save to 'public/upload/'
     },
-    limits: { fileSize: 5 * 1024 * 1024 },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+        cb(null, uniqueName); // Unique file name
+    }
 });
 
+// File filter to allow only certain image types
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type'), false);
+    }
+};
+
+// Multer upload configuration
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // Limit to 5MB
+});
+
+// Create Slider with image path
 exports.createSlider = [
     upload.single('image'),
     async (req, res) => {
@@ -29,20 +46,11 @@ exports.createSlider = [
                 return res.status(400).json({ message: 'No file uploaded', status: 0 });
             }
 
-            const s3Params = {
-                Bucket: process.env.S3_BUCKET_NAME, // Replace with your S3 bucket name
-                Key: `uploads/${Date.now()}-${req.file.originalname}`,
-                Body: req.file.buffer,
-                ContentType: req.file.mimetype,
-                ACL: 'public-read', // Makes the file publicly accessible
-            };
-
-            const s3Response = await s3.upload(s3Params).promise();
-
+            // Save the relative path to the database
             const addSlider = new Slider({
                 name: req.body.name,
                 category: req.body.category,
-                image: s3Response.Location, // Save the S3 URL
+                image: `/upload/${req.file.filename}`, // Save relative path to the image
                 status: req.body.status || 'active',
                 updated_at: Date.now(),
             });
@@ -55,6 +63,7 @@ exports.createSlider = [
     }
 ];
 
+// Get Slider data with image path
 exports.getSlider = async (req, res) => {
     try {
         const sliders = await Slider.find();
