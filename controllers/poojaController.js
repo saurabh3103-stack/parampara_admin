@@ -1,15 +1,9 @@
 const multer=require('multer');
-const path=require('path');
+const cloudinary = require('cloudinary').v2;  
 const Pooja = require('../models/PoojaModel');
 
-const storage = multer.diskStorage({
-    destination:(req,file,cb)=>{
-        cb(null,'/uploads/pooja/');
-    },
-    filename:(req,file,cb)=>{
-        cb(null,Date.now()+path.extname(file.originalname));
-    },
-});
+const storage = multer.memoryStorage();
+
 const fileFilter = (req,file,cb)=>{
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (allowedTypes.includes(file.mimetype)) {
@@ -18,34 +12,44 @@ const fileFilter = (req,file,cb)=>{
         cb(new Error('Invalid file type'), false); 
       }
 };
+
 const upload = multer({
     storage:storage,
     fileFilter:fileFilter,
     limits:{filesize:5*1024*1024},
-});
+}).single('image');
 
 exports.createPooja=[ 
-    upload.single('pooja_image'),
+    upload,
     async(req,res)=>{
     try{
         const {...poojaDetails}=req.body;
         let imagePath=null;
         if(req.file){
-            imagePath= '/uploads/pooja/'+req.file.filename;
+            res.status(400).json({message:'Pooja Image  image is required', status: 0});
         }
-        else{
-            imagePath= '';
-            // return res.status(400).json({message:'Pooja Image is Required',status:0});
-        }
-        const addPooja= new Pooja({
-            ...poojaDetails,
-            pooja_image:imagePath,
-            });
-        await addPooja.save();
-        res.status(200).json({message:'Pooja Data',data:addPooja,status:1});
+        cloudinary.uploader.upload_stream(
+            {resource_type:'auto'},
+            async (error,result)=>{
+                if(error){
+                    res.status(500).json({message:"Error uploading to Cloudinary", error: error.message, status: 0});
+                }
+                const addPooja= new Pooja({
+                    ...poojaDetails,
+                    pooja_image:result.secure_url,
+                    }); 
+                try{
+                    await addPooja.save();
+                    res.status(200).json({message:'Pooja Data',data:addPooja,status:1});
+                }   
+                catch(err){
+                    res.status(500).json({message:err.message});
+                } 
+            }
+        ).end(req.file.buffer);
     }
-    catch ( error ){
-        res.status(500).json({message:error.message});
+    catch(error){
+        res.status(500).json({message:error.message,status:0});
     }
 }];
 
