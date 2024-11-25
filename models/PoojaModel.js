@@ -6,7 +6,7 @@ const poojaSchema = new mongoose.Schema({
     pooja_Samegristatus:{type:String},
     price_withSamagri: { type: String, required: true },
     price_withoutSamagri: { type: String, required: true },
-    pooja_image: { type: String, required:true},
+    pooja_image: { type: String},
     short_discription:{type: String,require:true},
     long_discription:{type: String , require:true},
     status: { type: String, default:'active' },
