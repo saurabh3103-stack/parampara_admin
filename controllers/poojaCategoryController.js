@@ -1,75 +1,55 @@
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const Pooja = require('../models/PoojaModel');
+const cloudinary = require('cloudinary').v2;  
+const PoojaCategory = require('../models/PoojaCategory');
 
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type'), false);
-    }
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);  
+  } else {
+    cb(new Error('Invalid file type'), false); 
+  }
 };
 
 const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 },
-}).single('image');
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },  
+}).single('image');  
 
-exports.createPooja = [
-    upload,
-    async (req, res) => {
-        try {
-            const { ...poojaDetails } = req.body;
+exports.createPoojaCategory = [
+  upload,  
+  async (req, res) => {
+    try {
+      const { ...poojaCategoryDetails } = req.body;
+      if (!req.file) {
+        return res.status(400).json({ message: 'Pooja Category image is required', status: 0 });
+      }
+      cloudinary.uploader.upload_stream(
+        { resource_type: 'auto' }, 
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ message: 'Error uploading to Cloudinary', error: error.message, status: 0 });
+          }
+          const addPoojaCategory = new PoojaCategory({
+            ...poojaCategoryDetails,
+            pooja_image: result.secure_url,  
+          });
 
-            // Check if file is provided
-            if (!req.file) {
-                return res.status(400).json({
-                    message: 'Pooja image is required',
-                    status: 0,
-                });
-            }
-
-            // Upload to Cloudinary
-            const cloudinaryUpload = await new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream(
-                    { resource_type: 'auto' },
-                    (error, result) => {
-                        if (error) {
-                            return reject(error);
-                        }
-                        resolve(result);
-                    }
-                );
-                stream.end(req.file.buffer);
-            });
-
-            // Save Pooja data
-            const addPooja = new Pooja({
-                ...poojaDetails,
-                pooja_image: cloudinaryUpload.secure_url,
-            });
-
-            await addPooja.save();
-
-            // Send success response
-            return res.status(200).json({
-                message: 'Pooja Data',
-                data: addPooja,
-                status: 1,
-            });
-        } catch (error) {
-            // Handle errors
-            console.error(error);
-            return res.status(500).json({
-                message: error.message,
-                status: 0,
-            });
+          try {
+            await addPoojaCategory.save();
+            res.status(200).json({ message: 'Pooja category created successfully', data: addPoojaCategory, status: 1 });
+          } catch (err) {
+            res.status(500).json({ message: err.message, status: 0 });
+          }
         }
-    },
+      ).end(req.file.buffer);  
+    } catch (error) {
+      res.status(500).json({ message: error.message, status: 0 });
+    }
+  }
 ];
 
 exports.getPoojaCategory = async (req, res) => {
