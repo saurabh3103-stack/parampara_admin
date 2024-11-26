@@ -5,7 +5,6 @@ const poojaSamgriSchema = new mongoose.Schema({
     samagriName: { type: String, required:true},
     samagriPrice: { type: String, required:true},
     short_discription:{type: String},
-    long_discription:{type: String },
     status: { type: String, default:'active' },
     updated_at:{ type: Date,},
     created_at: { type: Date, default: Date.now },

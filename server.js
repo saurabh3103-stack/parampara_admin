@@ -22,8 +22,9 @@ mongoose
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Static files (images)
+
 app.use(express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Default route
 app.get('/', (req, res) => {

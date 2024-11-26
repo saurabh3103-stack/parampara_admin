@@ -1,9 +1,27 @@
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const path = require('path');
 const PoojaCategory = require('../models/PoojaCategory');
 
+// Helper function to ensure a folder exists
+const ensureDirectoryExistence = (folderPath) => {
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true }); // Create folder recursively
+  }
+};
+
 // Multer configuration
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'pooja_categories'); // Public folder path
+    ensureDirectoryExistence(folderPath); // Ensure folder exists
+    cb(null, folderPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname}`; // Add timestamp to filename
+    cb(null, uniqueName);
+  },
+});
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -18,19 +36,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
-}).single('image');
-
-// Helper function to upload to Cloudinary
-const uploadToCloudinary = (fileBuffer) =>
-  new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      { resource_type: 'image', folder: 'pooja_categories' },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
-      }
-    ).end(fileBuffer);
-  });
+}).single('pooja_image');
 
 // Controller to create a Pooja Category
 exports.createPoojaCategory = [
@@ -41,23 +47,15 @@ exports.createPoojaCategory = [
 
       let poojaImageUrl = null;
 
-      // If a file is uploaded, upload it to Cloudinary
+      // If a file is uploaded, save its path
       if (req.file) {
-        try {
-          poojaImageUrl = await uploadToCloudinary(req.file.buffer);
-        } catch (error) {
-          return res.status(500).json({
-            message: 'Failed to upload image to Cloudinary.',
-            error: error.message,
-            status: 0,
-          });
-        }
+        poojaImageUrl = `/uploads/pooja_categories/${req.file.filename}`; // Relative URL
       }
 
       // Save category details to the database
       const addPoojaCategory = new PoojaCategory({
         ...poojaCategoryDetails,
-        pooja_image: poojaImageUrl, // Add image URL if uploaded
+        pooja_image: poojaImageUrl, // Add image path if uploaded
       });
 
       await addPoojaCategory.save();
@@ -90,5 +88,16 @@ exports.getPoojaCategory = async (req, res) => {
       message: error.message,
       status: 0,
     });
+  }
+  exports.getPoojaCategoryWeb =  async(req,res)=>{
+    try{
+      const poojaCategory = await PoojaCategory.find({status:"active"});
+      res.status(200).json({
+        message:'Pooja Category Data For Web',status:1,data:poojaCategory
+      })
+    }
+    catch (error){
+      res.status(500).json({message:error.messgae,status:0});
+    }
   }
 };
