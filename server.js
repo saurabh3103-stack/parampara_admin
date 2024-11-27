@@ -37,7 +37,7 @@ app.use('/api/', Routes);
 // Error handler
 app.use(errorHandler);
 
-const PORT = 3000;
+const PORT = 3004;
 
 app.listen(PORT, () => {
   console.log('Backend running on port', PORT);

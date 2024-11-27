@@ -1,6 +1,7 @@
 const PoojaSamagri = require('../models/poojaSamagri');
 
 exports.createPoojaSamagri= async(req,res)=>{
+    console.log(req.body)
     try{
         const addSamagri= new PoojaSamagri(req.body);
         await addSamagri.save();
