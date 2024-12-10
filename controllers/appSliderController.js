@@ -56,3 +56,13 @@ exports.getSlider = async (req, res) => {
         res.status(500).json({ message: error.message, status: 0 });
     }
 };
+
+exports.getSliderUser = async (req, res) => {
+    try {
+      const activeslider = await Slider.find({ status: 'active' });
+      res.status(200).json({ message: 'Active Slider', data: activeslider, status: 1 });
+    } catch (error) {
+      res.status(500).json({ message: error.message, status: 0 });
+    }
+  };
+  

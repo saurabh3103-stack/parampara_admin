@@ -37,73 +37,6 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 }).single('pooja_image');
  
-// exports.createPooja = [
-//   upload,
-//   async (req, res) => {
-//     console.log(req.body);
-//     console.log(req.file);
-//     try {
-//       const {
-//         pooja_name,
-//         pooja_category,
-//         pooja_Samegristatus,
-//         price_withSamagri,
-//         price_withoutSamagri,
-//         short_discription,
-//         long_discription,
-//         samagriName,
-//         samagriPrice,
-//         samagrishort_discription,
-//       } = req.body;
-//       if (!pooja_name || !pooja_category || !price_withSamagri || !price_withoutSamagri || !short_discription || !long_discription) {
-//         return res.status(400).json({ message: 'All required fields must be provided.', status: 0 });
-//       }
-//       let pooja_image = null;
-//       if (req.file) {
-//         pooja_image = `/uploads/pooja_images/${req.file.filename}`;
-//       }
-
-//       const newPooja = new Pooja({
-//         pooja_name,
-//         pooja_category,
-//         pooja_Samegristatus,
-//         price_withSamagri,
-//         price_withoutSamagri,
-//         pooja_image,
-//         short_discription,
-//         long_discription,
-//       });
-//       console.log('hellow');
-//       await newPooja.save();
-//       console.log('hellow success');
-//       console.log((pooja_Samegristatus=="1"));
-//       console.log((pooja_Samegristatus=="0"));
-//       if (pooja_Samegristatus == "1") {
-//         console.log('hellow Samagri');
-//         const samagriPayload = {
-//           pooja_id: newPooja._id,
-//           samagriName:samagriName,
-//           samagriPrice:samagriPrice,
-//           short_discription:samagrishort_discription,
-//         };
-//         try {
-//           const samagriApiUrl = "http://localhost:3000/api/pooja/add-samagri/"; 
-//           const samagriResponse = await axios.post(samagriApiUrl, samagriPayload);
-//           console.log("Samagri API response:", samagriResponse.data);
-//         } catch (samagriError) {
-//           console.error("Samagri API error:", samagriError.message);
-//         }
-//       }
-//       res.status(201).json({ message: 'Pooja created successfully', data: newPooja, status: 1 });
-//     } catch (error) {
-//       res.status(500).json({ message: error.message, status: 0 });
-//     }
-//   },
-// ];
-
-
-
-
 exports.createPooja = [
   upload,
   async (req, res) => {
@@ -237,6 +170,20 @@ exports.updatePoojaStatus = async (req, res) => {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+
+exports.getPoojaById = async (req,res)=>{
+  try{
+    const { id }= req.params;
+    const poojaDetails = await Pooja.findById(id);
+    if(!poojaDetails){
+      return res.status(404).json({message:"Pooja Not Found",status:0});
+    }
+    return res.status(200).json({message:"Pooja Details",status:1,data:poojaDetails});
+  }
+  catch ( error ){
+    res.status(500).json({message:error.message,status:0});
+  }
+}
 
 // Controller to delete a Pooja by ID
 exports.deletePooja = async (req, res) => {
