@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const poojaSchema = new mongoose.Schema({
     pooja_name: { type: String, required: true },
+    slug_url: { type: String, required: true }, // Add this field
     pooja_category: {type:String, required:true},
     pooja_Samegristatus:{type:String},
     price_withSamagri: { type: String, required: true },

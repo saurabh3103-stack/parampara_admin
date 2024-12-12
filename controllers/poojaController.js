@@ -2,10 +2,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Pooja = require('../models/PoojaModel');
-const axios = require("axios");
 const httpMocks = require('node-mocks-http');
 const { createPoojaSamagri } = require('../controllers/poojaSamagriController');
-
 
 // Multer configuration
 const storage = multer.diskStorage({
@@ -36,28 +34,26 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 }).single('pooja_image');
- 
+
 exports.createPooja = [
   upload,
   async (req, res) => {
-    console.log(req.body);
-    console.log(req.file);
     try {
       const {
         pooja_name,
+        slug_url,
         pooja_category,
         pooja_Samegristatus,
         price_withSamagri,
         price_withoutSamagri,
         short_discription,
         long_discription,
-        samagriName,
-        samagriPrice,
-        samagrishort_discription,
+        samagriData,
       } = req.body;
 
       if (
         !pooja_name ||
+        !slug_url ||
         !pooja_category ||
         !price_withSamagri ||
         !price_withoutSamagri ||
@@ -74,8 +70,10 @@ exports.createPooja = [
         pooja_image = `/uploads/pooja_images/${req.file.filename}`;
       }
 
+      // Create the Pooja entry
       const newPooja = new Pooja({
         pooja_name,
+        slug_url,
         pooja_category,
         pooja_Samegristatus,
         price_withSamagri,
@@ -85,45 +83,44 @@ exports.createPooja = [
         long_discription,
       });
 
-      console.log('hellow');
       await newPooja.save();
-      console.log('hellow success');
-      console.log(pooja_Samegristatus == '1');
-      console.log(pooja_Samegristatus == '0');
+      console.log('Saved Pooja Data:', newPooja);
 
-      if (pooja_Samegristatus == '1') {
-        console.log('hellow Samagri');
+      // Handle samagri data if pooja_Samegristatus is 1
+      if (pooja_Samegristatus == '1' && samagriData) {
+        const samagriArray = JSON.parse(samagriData); 
+        if (Array.isArray(samagriArray)) {
+          for (const samagri of samagriArray) {
+            const mockReq = httpMocks.createRequest({
+              method: 'POST',
+              url: '/api/pooja/add-samagri',
+              body: {
+                pooja_id: newPooja._id,
+                samagriName: samagri.samagriName,
+                samagriPrice: samagri.samagriPrice,
+                short_discription: samagri.samagriDescription,
+              },
+            });
 
-        // Create a mock req object
-        const mockReq = httpMocks.createRequest({
-          method: 'POST',
-          url: '/api/pooja/add-samagri',
-          body: {
-            pooja_id: newPooja._id,
-            samagriName: samagriName,
-            samagriPrice: samagriPrice,
-            short_discription: samagrishort_discription,
-          },
-        });
-
-        // Create a mock res object
-        const mockRes = httpMocks.createResponse();
-
-        // Call createPoojaSamagri directly
-        await createPoojaSamagri(mockReq, mockRes);
-
-        const samagriResponseData = mockRes._getJSONData(); // Get JSON response from the mocked res
-        console.log('Samagri response:', samagriResponseData);
+            const mockRes = httpMocks.createResponse();
+            await createPoojaSamagri(mockReq, mockRes);
+            const samagriResponseData = mockRes._getJSONData();
+        console.log('Saved Samagri Data:', samagriResponseData);
+          }
+        }
       }
 
-      res
-        .status(201)
-        .json({ message: 'Pooja created successfully', data: newPooja, status: 1 });
+      res.status(201).json({
+        message: 'Pooja created successfully',
+        data: newPooja,
+        status: 1,
+      });
     } catch (error) {
       res.status(500).json({ message: error.message, status: 0 });
     }
   },
 ];
+
 
 
 exports.getPooja = async (req, res) => {
@@ -189,18 +186,76 @@ exports.getPoojaById = async (req,res)=>{
 exports.deletePooja = async (req, res) => {
   try {
     const { poojaId } = req.params;
-
     if (!poojaId) {
       return res.status(400).json({ message: 'Pooja ID is required.', status: 0 });
     }
-
     const deletedPooja = await Pooja.findByIdAndDelete(poojaId);
-
     if (!deletedPooja) {
       return res.status(404).json({ message: 'Pooja not found.', status: 0 });
     }
-
     res.status(200).json({ message: 'Pooja deleted successfully', status: 1 });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
+exports.updatePoojaById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      pooja_name,
+      slug_url,
+      pooja_category,
+      pooja_Samegristatus,
+      price_withSamagri,
+      price_withoutSamagri,
+      short_discription,
+      long_discription,
+    } = req.body;
+    if (
+      !pooja_name ||
+      !slug_url ||
+      !pooja_category ||
+      !price_withSamagri ||
+      !price_withoutSamagri ||
+      !short_discription ||
+      !long_discription
+    ) {
+      return res
+        .status(400)
+        .json({ message: 'All required fields must be provided.', status: 0 });
+    }
+    let updateData = {
+      pooja_name,
+      slug_url,
+      pooja_category,
+      pooja_Samegristatus,
+      price_withSamagri,
+      price_withoutSamagri,
+      short_discription,
+      long_discription,
+    };
+    if (req.file) {
+      const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'pooja_images');
+      const pooja_image = `/uploads/pooja_images/${req.file.filename}`;
+      updateData.pooja_image = pooja_image;
+      const poojaDetails = await Pooja.findById(id);
+      if (poojaDetails && poojaDetails.pooja_image) {
+        const oldImagePath = path.join(folderPath, poojaDetails.pooja_image.split('/').pop());
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+    }
+    const updatedPooja = await Pooja.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updatedPooja) {
+      return res.status(404).json({ message: 'Pooja not found.', status: 0 });
+    }
+    res.status(200).json({
+      message: 'Pooja updated successfully',
+      data: updatedPooja,
+      status: 1,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message, status: 0 });
   }
