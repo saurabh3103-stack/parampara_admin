@@ -47,12 +47,12 @@ exports.createPandit = [
       let imagePath = null;
       let aadharImagePath = null;
 
-      if (req.files.image) {
-        imagePath = `/uploads/panditImages/${req.files.image[0].filename}`;
-      }
-      if (req.files.aadhar_image) {
-        aadharImagePath = `/uploads/panditImages/${req.files.aadhar_image[0].filename}`;
-      }
+      // if (req.files.image) {
+      //   imagePath = `/uploads/panditImages/${req.files.image[0].filename}`;
+      // }
+      // if (req.files.aadhar_image) {
+      //   aadharImagePath = `/uploads/panditImages/${req.files.aadhar_image[0].filename}`;
+      // }
 
       const newPandit = new Pandit({
         ...otherDetails,

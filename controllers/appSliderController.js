@@ -57,15 +57,27 @@ exports.getSlider = async (req, res) => {
     }
 };
 
+// POST method to fetch sliders based on status and category
 exports.getSliderUser = async (req, res) => {
     try {
-      const activeslider = await Slider.find({ status: 'active' });
-      res.status(200).json({ message: 'Active Slider', data: activeslider, status: 1 });
+        const { category } = req.body;
+        const status = "active";
+        const sliders = await Slider.find({ status, category });
+        console.log('Fetched sliders:', sliders);
+        res.status(200).json({
+            message: `Active sliders for category "${category}"`,
+            status: 1,
+            data: sliders
+        });
     } catch (error) {
-      res.status(500).json({ message: error.message, status: 0 });
+        console.error('Error fetching sliders:', error.message);
+        res.status(500).json({
+            message: error.message,
+            status: 0
+        });
     }
-  };
-  
+};
+
 exports.deleteSlider = async(req,res)=>{
       try {
         const sliderId  = req.params.id;

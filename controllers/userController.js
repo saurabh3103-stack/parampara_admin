@@ -100,3 +100,21 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+exports.getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required", status: 0 });
+    }
+    const user = await User.findOne({ email: email });
+    console.log(user );
+    if (!user) {
+      return res.status(404).json({ message: "User not found", status: 0 });
+    }
+    const userResponse = user.toObject();
+    delete userResponse.password; 
+    res.status(200).json({ message: "User found", status: 1, data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};

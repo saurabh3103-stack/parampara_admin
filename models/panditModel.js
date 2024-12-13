@@ -22,7 +22,7 @@ const panditSchema = new mongoose.Schema({
   pincode: { type: String },
   skills: { type: String },
   account_type: { type: String },
-  pancard_no: { type: String, unique: true },
+  pancard_no: { type: String, default: null },
   degree: { type: String },
   bank_ac_no: { type: String },
   experience: { type: Number, default: 0 },
@@ -41,4 +41,4 @@ const panditSchema = new mongoose.Schema({
   update_at: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Pandit', panditSchema);
+module.exports = mongoose.model('Pandit_table', panditSchema);

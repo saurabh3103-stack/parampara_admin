@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { signin, authenticateToken } = require('../middlewares/authMiddleware');  // Import the functions
 
-const { createUser, getUsers,loginUser } = require('../controllers/userController');
+const { createUser, getUsers,loginUser, getUserByEmail } = require('../controllers/userController');
 const { createlocation, getlocation } = require('../controllers/locationController');
 const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory, getPoojaCategoryWeb ,deletePoojaCategory, getPoojaCategoryById, updatePoojaCategroy, updatePoojaCategoryStatus} = require('../controllers/poojaCategoryController');
@@ -19,6 +19,7 @@ router.get('/admin/', authenticateToken, getAdmin);
 router.post('/user/create-user', authenticateToken, createUser);
 router.get('/user/all-user', authenticateToken, getUsers);
 router.post('/user/login',authenticateToken, loginUser);
+router.post('/user/get-user/',authenticateToken, getUserByEmail);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
 router.get('/pooja/all-pooja/', authenticateToken, getPooja);
@@ -50,7 +51,7 @@ router.get('/slider/:id',authenticateToken,getSliderById);
 router.put('/slider/update-slider/:id',authenticateToken,updateSlider);
 router.put('/slider/update-status',authenticateToken,updateSliderStatus);
 router.delete('/slider/category/delete/:id', authenticateToken , deleteSliderCategory);
-router.get('slider/get-slider',authenticateToken,getSliderUser);
+router.post('/slider/get-slider',authenticateToken,getSliderUser);
 router.post('/pandit/create-pandit',authenticateToken,createPandit);
 router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
