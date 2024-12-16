@@ -72,9 +72,28 @@ exports.createPandit = [
 
 // Get all Pandits
 exports.getPandits = async (req, res) => {
+  console.log("inside get pandits")
   try {
     const pandits = await Pandit.find();
     res.json({ message: 'Pandit Data', status: 1, data: pandits });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
+exports.deletePanditById = async (req, res) => {
+  const { id } = req.params; // Extract ID from the request parameters
+  console.log(`Deleting pandit with ID: ${id}`);
+  
+  try {
+    const pandit = await Pandit.findById(id); // Find the pandit by ID
+    if (!pandit) {
+      return res.status(404).json({ message: 'Pandit not found', status: 0 });
+    }
+
+    await pandit.remove(); // Remove the pandit from the database
+
+    res.json({ message: 'Pandit deleted successfully', status: 1 });
   } catch (error) {
     res.status(500).json({ message: error.message, status: 0 });
   }
