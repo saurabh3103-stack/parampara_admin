@@ -1,0 +1,16 @@
+{
+  "folders": [
+	{
+		"path": "../../../../redShopLive/shop"
+	},
+	{
+		"path": "../../../../adminshop/admin/rest"
+	},
+	{
+		"path": "../../../parampara_admin_frontend/parampara-clone-fixed/parampara_admin"
+	},
+	{
+		"path": "../../../parampara_admin_frontend/parampara-web"
+	}
+]
+}
