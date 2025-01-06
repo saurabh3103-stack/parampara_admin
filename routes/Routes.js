@@ -3,15 +3,17 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { signin, authenticateToken } = require('../middlewares/authMiddleware');  // Import the functions
 
-const { createUser, getUsers,loginUser, getUserByEmail } = require('../controllers/userController');
+const { createUser, getUsers,loginUser, getUserByEmail,updateUser ,updateUserStatus } = require('../controllers/userController');
 const { createlocation, getlocation } = require('../controllers/locationController');
 const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory, getPoojaCategoryWeb ,deletePoojaCategory, getPoojaCategoryById, updatePoojaCategroy, updatePoojaCategoryStatus} = require('../controllers/poojaCategoryController');
-const { createPooja, getPooja, getPoojaUser , updatePoojaStatus, deletePooja, getPoojaById,updatePoojaById } = require('../controllers/poojaController');
+const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatus, deletePooja, getPoojaById,updatePoojaById } = require('../controllers/poojaController');
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
 const { createPandit,getPandits,loginPandit } = require('../controllers/panditController');
+const { sendOtp,verifyOtp } = require("../controllers/otpController");
+const { addToCart,getCartItems} = require("../controllers/cartController");
 // Define other routes (existing ones)
 router.post('/signin', signin);
 router.post('/admin/', authenticateToken, createAdmin);
@@ -20,11 +22,14 @@ router.post('/user/create-user', authenticateToken, createUser);
 router.get('/user/all-user', authenticateToken, getUsers);
 router.post('/user/login',authenticateToken, loginUser);
 router.post('/user/get-user/',authenticateToken, getUserByEmail);
+router.put('/user/update-user',authenticateToken,updateUser);
+router.put('/user/update-status',authenticateToken,updateUserStatus);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
 router.get('/pooja/all-pooja/', authenticateToken, getPooja);
 router.post('/pooja/create-pooja/', authenticateToken, createPooja);
 router.get('/pooja/all-poojaUser',authenticateToken,getPoojaUser);
+router.get('/pooja/all-poojaUser/:id',authenticateToken,getPoojaUserbyID);
 router.get('/pooja/pooja/:id',authenticateToken , getPoojaById);
 router.put('/pooja/update-pooja/:id',authenticateToken,updatePoojaById);
 router.put('/pooja/update-status/', authenticateToken, updatePoojaStatus);
@@ -55,8 +60,10 @@ router.post('/slider/get-slider',authenticateToken,getSliderUser);
 router.post('/pandit/create-pandit',authenticateToken,createPandit);
 router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
-
-
+router.post("/otp/send-otp", authenticateToken ,sendOtp);
+router.post("/otp/verify-otp", authenticateToken,verifyOtp);
+router.post("/cart/addCart",authenticateToken,addToCart);
+router.get("/cart/get-cart/:id",authenticateToken,getCartItems);
 module.exports = router;
 
 

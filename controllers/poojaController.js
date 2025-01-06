@@ -171,7 +171,7 @@ exports.updatePoojaStatus = async (req, res) => {
 exports.getPoojaById = async (req,res)=>{
   try{
     const { id }= req.params;
-    const poojaDetails = await Pooja.findById(id);
+    const poojaDetails = await Pooja.findOne({slug_url:id});
     if(!poojaDetails){
       return res.status(404).json({message:"Pooja Not Found",status:0});
     }
@@ -182,7 +182,19 @@ exports.getPoojaById = async (req,res)=>{
   }
 }
 
-// Controller to delete a Pooja by ID
+exports.getPoojaUserbyID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const poojaDetails = await Pooja.findOne({pooja_category: id });
+    if (!poojaDetails) {
+      return res.status(404).json({ message: "Pooja Not Found", status: 0 });
+    }
+    return res.status(200).json({ message: "Pooja Details", status: 1, data: poojaDetails });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
 exports.deletePooja = async (req, res) => {
   try {
     const { poojaId } = req.params;

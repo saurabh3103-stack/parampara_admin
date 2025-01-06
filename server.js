@@ -11,6 +11,8 @@ const path = require('path');
 
 const app = express();
 app.use(cors({ origin: '*' }));
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
 // Use the appropriate URI
 const mongoURI = process.env.MONGODB_URI;

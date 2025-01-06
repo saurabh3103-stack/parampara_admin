@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 
 const panditSchema = new mongoose.Schema({
   username: { type: String, required: true },
+  name: {type: String, default : null },
   email: { type: String, required: true, unique: true },
   mobile: { type: String, required: true, unique: true },
   address: { type: String },
-  longitude: { type: Number },
-  latitude: { type: Number },
+  longitude: { type: Number,default:null },
+  latitude: { type: Number,default:null },
   password: { type: String, required: true },
   alternate_no: { type: String, default: null },
   gender: { type: String, enum: ['male', 'female', 'other'] },
