@@ -47,12 +47,7 @@ exports.createPandit = [
       let imagePath = null;
       let aadharImagePath = null;
 
-      // if (req.files.image) {
-      //   imagePath = `/uploads/panditImages/${req.files.image[0].filename}`;
-      // }
-      // if (req.files.aadhar_image) {
-      //   aadharImagePath = `/uploads/panditImages/${req.files.aadhar_image[0].filename}`;
-      // }
+    
 
       const newPandit = new Pandit({
         ...otherDetails,
@@ -64,6 +59,47 @@ exports.createPandit = [
       const panditResponse = newPandit.toObject();
       delete panditResponse.password;
       res.status(201).json({ message: 'Pandit added', status: 1 });
+    } catch (error) {
+      res.status(500).json({ message: error.message, status: 0 });
+    }
+  },
+];
+
+
+
+exports.updatePanditById = [
+  upload, // Add your image upload middleware here
+  async (req, res) => {
+    try {
+      const { id } = req.params; // Get Pandit ID from request params
+      const { password, ...otherDetails } = req.body; // Extract password and other details
+
+      // Check if password is being updated, if so, hash the new password
+      let updatedData = { ...otherDetails };
+      if (password) {
+        const saltRounds = 10;
+        updatedData.password = await bcrypt.hash(password, saltRounds);
+      }
+
+      // Handle image update if any (assuming you are saving the path of the image)
+      if (req.file) {
+        updatedData.image = req.file.path; // Store new image path
+      }
+      if (req.body.aadhar_image) {
+        updatedData.aadhar_image = req.body.aadhar_image; // Update Aadhar image if provided
+      }
+
+      // Find the Pandit by ID and update
+      const updatedPandit = await Pandit.findByIdAndUpdate(id, updatedData, { new: true });
+      if (!updatedPandit) {
+        return res.status(404).json({ message: 'Pandit not found', status: 0 });
+      }
+
+      // Remove the password from the response before sending back
+      const panditResponse = updatedPandit.toObject();
+      delete panditResponse.password;
+
+      res.status(200).json({ message: 'Pandit updated successfully', status: 1, data: panditResponse });
     } catch (error) {
       res.status(500).json({ message: error.message, status: 0 });
     }
@@ -103,6 +139,25 @@ exports.loginPandit = async (req, res) => {
       status: 1,
       data: { id: pandit._id, username: pandit.username, email: pandit.email },
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
+
+
+exports.deletePanditById = async (req, res) => {
+  try {
+    const { id } = req.params; // Get Pandit ID from request params
+
+    // Find and delete the Pandit by ID
+    const deletedPandit = await Pandit.findByIdAndDelete(id);
+    if (!deletedPandit) {
+      return res.status(404).json({ message: 'Pandit not found', status: 0 });
+    }
+
+    // Respond with a success message
+    res.status(200).json({ message: 'Pandit deleted successfully', status: 1 });
   } catch (error) {
     res.status(500).json({ message: error.message, status: 0 });
   }

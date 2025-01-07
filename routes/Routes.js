@@ -11,7 +11,7 @@ const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatu
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
-const { createPandit,getPandits,loginPandit } = require('../controllers/panditController');
+const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById } = require('../controllers/panditController');
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems} = require("../controllers/cartController");
 // Define other routes (existing ones)
@@ -58,6 +58,8 @@ router.put('/slider/update-status',authenticateToken,updateSliderStatus);
 router.delete('/slider/category/delete/:id', authenticateToken , deleteSliderCategory);
 router.post('/slider/get-slider',authenticateToken,getSliderUser);
 router.post('/pandit/create-pandit',authenticateToken,createPandit);
+router.post('/pandit/update-pandit/:id',authenticateToken,updatePanditById);
+router.delete('/pandit/delete-pandit/:id',authenticateToken,deletePanditById);
 router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
 router.post("/otp/send-otp", authenticateToken ,sendOtp);
