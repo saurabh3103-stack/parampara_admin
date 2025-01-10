@@ -15,6 +15,14 @@ const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById }
 const {getPanditsInRange}=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems} = require("../controllers/cartController");
+
+
+const {
+  createOrder,
+  getOrder,
+  addDeliveryAddress,
+  getDeliveryAddress,
+} = require("../controllers/orderController");
 // Define other routes (existing ones)
 router.post('/signin', signin);
 router.post('/admin/', authenticateToken, createAdmin);
@@ -68,6 +76,12 @@ router.post("/otp/send-otp", authenticateToken ,sendOtp);
 router.post("/otp/verify-otp", authenticateToken,verifyOtp);
 router.post("/cart/addCart",authenticateToken,addToCart);
 router.get("/cart/get-cart/:id",authenticateToken,getCartItems);
+
+
+router.post("/orders",authenticateToken, createOrder); // Create Product Order
+router.get("/orders/:orderId",authenticateToken, getOrder); // Get Product Order Details
+router.post("/delivery",authenticateToken, addDeliveryAddress); // Add Delivery Address
+router.get("/delivery/:orderId",authenticateToken, getDeliveryAddress); // Get Delivery Address
 module.exports = router;
 
 
