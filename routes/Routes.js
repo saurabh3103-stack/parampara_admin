@@ -29,10 +29,12 @@ router.post('/admin/', authenticateToken, createAdmin);
 router.get('/admin/', authenticateToken, getAdmin);
 router.post('/find-pandit', authenticateToken, getPanditsInRange);
 router.post('/user/create-user', authenticateToken, createUser);
-router.get('/user/all-user', authenticateToken, getUsers);
 router.post('/user/login',authenticateToken, loginUser);
+router.get('/user/all-user', authenticateToken, getUsers);
+
 router.post('/user/get-user/',authenticateToken, getUserByEmail);
-router.put('/user/update-user',authenticateToken,updateUser);
+router.put('/user/update-user/:userId', authenticateToken, updateUser);
+
 router.put('/user/update-status',authenticateToken,updateUserStatus);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
