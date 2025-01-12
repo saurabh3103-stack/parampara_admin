@@ -123,7 +123,8 @@ exports.updateUser = [
   upload,
   async (req, res) => {
     try {
-      const { userId, ...updateData } = req.body;
+      const { userId } = req.params;  // Extracting userId from params
+      const updateData = req.body;  // Extracting the rest of the data from body
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found", status: 0 });

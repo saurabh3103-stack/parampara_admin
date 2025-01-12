@@ -121,6 +121,71 @@ exports.createPooja = [
   },
 ];
 
+exports.updatePoojaById = [
+  upload,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Prepare update data from req.body
+      const updateData = { ...req.body };
+
+      // Handle uploaded image if present
+      if (req.file) {
+        const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'pooja_images');
+        const pooja_image = `/uploads/pooja_images/${req.file.filename}`;
+        updateData.pooja_image = pooja_image;
+
+        // Delete old image if it exists
+        const poojaDetails = await Pooja.findById(id);
+        if (poojaDetails && poojaDetails.pooja_image) {
+          const oldImagePath = path.join(folderPath, poojaDetails.pooja_image.split('/').pop());
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        }
+      }
+
+      // Update the Pooja document
+      const updatedPooja = await Pooja.findByIdAndUpdate(id, updateData, { new: true });
+      if (!updatedPooja) {
+        return res.status(404).json({ message: 'Pooja not found.', status: 0 });
+      }
+
+      // Handle samagriData if pooja_Samegristatus is 1
+      if (req.body.pooja_Samegristatus === '1' && req.body.samagriData) {
+        const samagriArray = JSON.parse(req.body.samagriData);
+        if (Array.isArray(samagriArray)) {
+          for (const samagri of samagriArray) {
+            const mockReq = httpMocks.createRequest({
+              method: 'POST',
+              url: '/api/pooja/update-samagri',
+              body: {
+                pooja_id: id,
+                ...samagri,
+              },
+            });
+
+            const mockRes = httpMocks.createResponse();
+            await updatePoojaSamagri(mockReq, mockRes); // Ensure `updatePoojaSamagri` is implemented properly
+            const samagriResponseData = mockRes._getJSONData();
+            console.log('Updated Samagri Data:', samagriResponseData);
+          }
+        }
+      }
+
+      res.status(200).json({
+        message: 'Pooja updated successfully',
+        data: updatedPooja,
+        status: 1,
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message, status: 0 });
+    }
+  },
+];
+
+
 
 
 exports.getPooja = async (req, res) => {
@@ -206,68 +271,6 @@ exports.deletePooja = async (req, res) => {
       return res.status(404).json({ message: 'Pooja not found.', status: 0 });
     }
     res.status(200).json({ message: 'Pooja deleted successfully', status: 1 });
-  } catch (error) {
-    res.status(500).json({ message: error.message, status: 0 });
-  }
-};
-
-exports.updatePoojaById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      pooja_name,
-      slug_url,
-      pooja_category,
-      pooja_Samegristatus,
-      price_withSamagri,
-      price_withoutSamagri,
-      short_discription,
-      long_discription,
-    } = req.body;
-    if (
-      !pooja_name ||
-      !slug_url ||
-      !pooja_category ||
-      !price_withSamagri ||
-      !price_withoutSamagri ||
-      !short_discription ||
-      !long_discription
-    ) {
-      return res
-        .status(400)
-        .json({ message: 'All required fields must be provided.', status: 0 });
-    }
-    let updateData = {
-      pooja_name,
-      slug_url,
-      pooja_category,
-      pooja_Samegristatus,
-      price_withSamagri,
-      price_withoutSamagri,
-      short_discription,
-      long_discription,
-    };
-    if (req.file) {
-      const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'pooja_images');
-      const pooja_image = `/uploads/pooja_images/${req.file.filename}`;
-      updateData.pooja_image = pooja_image;
-      const poojaDetails = await Pooja.findById(id);
-      if (poojaDetails && poojaDetails.pooja_image) {
-        const oldImagePath = path.join(folderPath, poojaDetails.pooja_image.split('/').pop());
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
-    }
-    const updatedPooja = await Pooja.findByIdAndUpdate(id, updateData, { new: true });
-    if (!updatedPooja) {
-      return res.status(404).json({ message: 'Pooja not found.', status: 0 });
-    }
-    res.status(200).json({
-      message: 'Pooja updated successfully',
-      data: updatedPooja,
-      status: 1,
-    });
   } catch (error) {
     res.status(500).json({ message: error.message, status: 0 });
   }

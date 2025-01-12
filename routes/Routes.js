@@ -11,18 +11,23 @@ const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatu
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
-const { createPandit,getPandits,loginPandit } = require('../controllers/panditController');
+const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById } = require('../controllers/panditController');
+const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems} = require("../controllers/cartController");
+const { createOrder,getOrder,addDeliveryAddress,getDeliveryAddress} = require("../controllers/orderController");
 // Define other routes (existing ones)
 router.post('/signin', signin);
 router.post('/admin/', authenticateToken, createAdmin);
 router.get('/admin/', authenticateToken, getAdmin);
+router.post('/find-pandit', authenticateToken, getPanditsInRange);
 router.post('/user/create-user', authenticateToken, createUser);
-router.get('/user/all-user', authenticateToken, getUsers);
 router.post('/user/login',authenticateToken, loginUser);
+router.get('/user/all-user', authenticateToken, getUsers);
+
 router.post('/user/get-user/',authenticateToken, getUserByEmail);
-router.put('/user/update-user',authenticateToken,updateUser);
+router.put('/user/update-user/:userId', authenticateToken, updateUser);
+
 router.put('/user/update-status',authenticateToken,updateUserStatus);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
@@ -58,12 +63,19 @@ router.put('/slider/update-status',authenticateToken,updateSliderStatus);
 router.delete('/slider/category/delete/:id', authenticateToken , deleteSliderCategory);
 router.post('/slider/get-slider',authenticateToken,getSliderUser);
 router.post('/pandit/create-pandit',authenticateToken,createPandit);
+router.put('/pandit/update-pandit/:id',authenticateToken,updatePanditById);
+router.delete('/pandit/delete-pandit/:id',authenticateToken,deletePanditById);
 router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
 router.post("/otp/send-otp", authenticateToken ,sendOtp);
 router.post("/otp/verify-otp", authenticateToken,verifyOtp);
 router.post("/cart/addCart",authenticateToken,addToCart);
 router.get("/cart/get-cart/:id",authenticateToken,getCartItems);
-module.exports = router;
 
+
+router.post("/order/create-order",authenticateToken, createOrder); // Create Product Order
+router.get("/orders/:orderId",authenticateToken, getOrder); // Get Product Order Details
+router.post("/order/delivery-address",authenticateToken, addDeliveryAddress); // Add Delivery Address
+router.get("/order/delivery-address/:orderId",authenticateToken, getDeliveryAddress); // Get Delivery Address
+module.exports = router;
 

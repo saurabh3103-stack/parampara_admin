@@ -84,27 +84,28 @@ exports.addToCart = async (req, res) => {
 };
 
 exports.getCartItems = async (req, res) => {
-  try {
-    const { user_id } = req.params;
-    if (!user_id) {
-      return res.status(400).json({
-        success: false,
-        message: "user_id is required",
+    try {
+      const { user_id } = req.body; // Extract user_id from the request body
+      if (!user_id) {
+        return res.status(400).json({
+          success: 0,
+          message: "user_id is required",
+        });
+      }
+      const cartItems = await Cart.find({ user_id, order_status: 0 });
+      res.status(200).json({
+        success: 1,
+        cart: cartItems,
+      });
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      res.status(500).json({
+        success: 0,
+        message: "Internal server error",
       });
     }
-    const cartItems = await Cart.find({ user_id, order_status: 0 });
-    res.status(200).json({
-      success: true,
-      cart: cartItems,
-    });
-  } catch (error) {
-    console.error("Error fetching cart items:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
 };
+  
 
 exports.removeCartItem = async (req, res) => {
     try {
