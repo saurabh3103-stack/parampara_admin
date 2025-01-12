@@ -15,7 +15,7 @@ const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById }
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems} = require("../controllers/cartController");
-const { createOrder,getOrder,addDeliveryAddress,getDeliveryAddress} = require("../controllers/orderController");
+const { createOrder,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress} = require("../controllers/orderController");
 // Define other routes (existing ones)
 router.post('/signin', signin);
 router.post('/admin/', authenticateToken, createAdmin);
@@ -77,5 +77,8 @@ router.post("/order/create-order",authenticateToken, createOrder); // Create Pro
 router.get("/orders/:orderId",authenticateToken, getOrder); // Get Product Order Details
 router.post("/order/delivery-address",authenticateToken, addDeliveryAddress); // Add Delivery Address
 router.get("/order/delivery-address/:orderId",authenticateToken, getDeliveryAddress); // Get Delivery Address
+router.get("/orders",authenticateToken,getAllOrders);
+router.get('/order-address' ,getAllOrdersWithAddress);
+
 module.exports = router;
 
