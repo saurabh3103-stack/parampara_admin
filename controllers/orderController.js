@@ -118,12 +118,11 @@ const updatePoojaBooking = async (req, res) => {
 };
 
 
-// end 
 // Get Product Order Details
 const getOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = await Order.findOne({ OrderId: orderId });
+    const order = await PoojaBooking.findOne({ bookingId: orderId });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
