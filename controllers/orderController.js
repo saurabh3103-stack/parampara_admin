@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require("uuid");
-const Order = require("../models/Order");
+const PoojaBooking = require("../models/PoojaBooking");
 const DeliveryAddress = require("../models/DeliveryAddress");
 
 const generateNumericUUID = () => {
@@ -7,48 +7,118 @@ const generateNumericUUID = () => {
     const numericId = uuid.split('').map(char => char.charCodeAt(0) % 10).join(''); // Convert each character to a number
     return numericId;
   };
-  
-// Create Product Order
-const createOrder = async (req, res) => {
+    
+// Create Pooja Booking
+
+const createPoojaBooking = async (req, res) => {
+  console.log(req.body);
   try {
     const {
-      ProductId,
-      ProductName,
-      Amount,
-      Quantity,
-      ProductType,
-      Date,
-      Time,
-      UserId,
-      Username,
-      ContactNumber,
-      Email,
+      poojaId,
+      poojaName,
+      poojaType,
+      isSamagriIncluded,
+      date,
+      time,
+      userId,
+      username,
+      contactNumber,
+      email,
+      amount,
+      quantity,
     } = req.body;
-
-    const newOrder = new Order({
-      OrderId: generateNumericUUID(),
-      ProductId,
-      ProductName,
-      Amount,
-      Quantity,
-      ProductType,
-      Date: ProductType === "Pooja Bhajan Mandal" ? Date : null,
-      Time: ProductType === "Pooja Bhajan Mandal" ? Time : null,
-      User: {
-        UserId,
-        Username,
-        ContactNumber,
-        Email,
+    const newPoojaBooking = new PoojaBooking({
+      bookingId: generateNumericUUID(),
+      poojaDetails: {
+        poojaId,
+        poojaName,
+        poojaType,
+        isSamagriIncluded,
+      },
+      userDetails: {
+        userId,
+        username,
+        contactNumber,
+        email,
+      },
+      schedule: {
+        date,
+        time,
+      },
+      paymentDetails: {
+        amount,
+        quantity,
       },
     });
-
-    await newOrder.save();
-    res.status(201).json({ message: "Order created successfully", order: newOrder,status:1 });
+    await newPoojaBooking.save();
+    console.log(newPoojaBooking);
+    res.status(201).json({
+      message: "Pooja booking created successfully",
+      poojaBooking: newPoojaBooking,
+      status: 1,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error creating order", error: error.message,status:0 });
+    console.log(error.message);
+    res.status(500).json({
+      message: "Error creating Pooja booking",
+      error: error.message,
+      status: 0,
+    });
   }
 };
 
+// Update pooja booking confirm 
+const updatePoojaBooking = async (req, res) => {
+  console.log(req.body);
+  try {
+    const { bookingId, transactionId, transactionStatus, transactionDate } = req.body;
+
+    // Validate required fields
+    if (!bookingId || !transactionId || !transactionStatus || !transactionDate) {
+      return res.status(400).json({
+        message: "Missing required fields: bookingId, transactionId, transactionStatus, or transactionDate.",
+        status: 0,
+      });
+    }
+
+    // Find the PoojaBooking by bookingId
+    const poojaBooking = await PoojaBooking.findOne({ bookingId });
+
+    if (!poojaBooking) {
+      return res.status(404).json({
+        message: "Pooja booking not found",
+        status: 0,
+      });
+    }
+
+    // Update bookingStatus and transaction details
+    poojaBooking.bookingStatus = 1; // Mark as confirmed
+    poojaBooking.transactionDetails = {
+      transactionId,
+      transactionStatus,
+      transactionDate,
+    };
+
+    // Save the updated booking
+    await poojaBooking.save();
+
+    res.status(200).json({
+      message: "Pooja booking updated successfully",
+      poojaBooking,
+      status: 1,
+    });
+  } catch (error) {
+    console.error("Error updating Pooja booking:", error.message);
+    res.status(500).json({
+      message: "Error updating Pooja booking",
+      error: error.message,
+      status: 0,
+    });
+  }
+};
+
+
+// end 
 // Get Product Order Details
 const getOrder = async (req, res) => {
   try {
@@ -157,10 +227,11 @@ const getAllOrdersWithAddress = async (req, res) => {
   };
   
 module.exports = {
-  createOrder,
+  createPoojaBooking,
   getOrder,
   addDeliveryAddress,
   getDeliveryAddress,
   getAllOrders,
   getAllOrdersWithAddress,
+  updatePoojaBooking,
 };

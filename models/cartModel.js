@@ -41,6 +41,10 @@ const cartSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isSamagri:{
+      type:String,
+      default:null,
+    },
     pooja_date: {
       type: Date,
       required: true,

@@ -11,12 +11,14 @@ const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatu
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
-const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById } = require('../controllers/panditController');
+const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,getPanditById } = require('../controllers/panditController');
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems} = require("../controllers/cartController");
-const { createOrder,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress} = require("../controllers/orderController");
+const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress,updatePoojaBooking} = require("../controllers/orderController");
+const { createTransaction } = require("../controllers/transactionController");
 // Define other routes (existing ones)
+
 router.post('/signin', signin);
 router.post('/admin/', authenticateToken, createAdmin);
 router.get('/admin/', authenticateToken, getAdmin);
@@ -67,16 +69,20 @@ router.put('/pandit/update-pandit/:id',authenticateToken,updatePanditById);
 router.delete('/pandit/delete-pandit/:id',authenticateToken,deletePanditById);
 router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
+router.get('/pandit/get-pandit/:id',authenticateToken,getPanditById);
+
 router.post("/otp/send-otp", authenticateToken ,sendOtp);
 router.post("/otp/verify-otp", authenticateToken,verifyOtp);
 router.post("/cart/addCart",authenticateToken,addToCart);
 router.get("/cart/get-cart/:id",authenticateToken,getCartItems);
+router.post("/transcation/create-transcation",authenticateToken,createTransaction);
 
-
-router.post("/order/create-order",authenticateToken, createOrder); // Create Product Order
+router.post("/order/pooja-booking",authenticateToken, createPoojaBooking); // Create Product Order
 router.get("/orders/:orderId",authenticateToken, getOrder); // Get Product Order Details
+router.put("/orders/update-order",authenticateToken,updatePoojaBooking);
 router.post("/order/delivery-address",authenticateToken, addDeliveryAddress); // Add Delivery Address
 router.get("/order/delivery-address/:orderId",authenticateToken, getDeliveryAddress); // Get Delivery Address
+
 router.get("/orders",authenticateToken,getAllOrders);
 router.get('/order-address' ,getAllOrdersWithAddress);
 
