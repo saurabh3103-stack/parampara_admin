@@ -1,7 +1,7 @@
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const bhajanCategory= require('../models/bhajan_categoryModel');
+const BhajanCategory= require('../models/bhajan_categoryModel');
 
 const ensureDirectoryExistence = (folderPath) => {
     if(!fs.existsSync(folderPath)){
@@ -42,11 +42,12 @@ exports.createBhajanCategory = [
     async (req,res)=>{
         try{
             const { ...bhajanCategory }=req.body;
+            console.log(bhajanCategory);
             let bhajanImageUrl = null ;
             if(req.file){
                 bhajanImageUrl = `uploads/bhajan_categories/${req,file.filename}`;
             }
-            const addbhajanCategory = new bhajanCategory({
+            const addbhajanCategory = new BhajanCategory({
                 ...bhajanCategory,
                 bhajan_image:bhajanImageUrl,
             });
@@ -68,7 +69,7 @@ exports.createBhajanCategory = [
 
 exports.getbhajanCategory = async(req,res)=>{
     try{
-        const bhajanCategory = await bhajanCategory.find();
+        const bhajanCategory = await BhajanCategory.find();
         res.status(200).json({
             message:'Bhajan Category Data',
             status:1,
@@ -82,7 +83,7 @@ exports.getbhajanCategory = async(req,res)=>{
 
 exports.getbhajanCategoryUser = async(req,res)=>{
     try{
-        const bhajanCategory = await bhajanCategory.find({status:"active"});
+        const bhajanCategory = await BhajanCategory.find({status:"active"});
         res.status(200).json({message:"Bhajan mandal Category",status:1,data:bhajanCategory});
     }
     catch(error){
@@ -93,7 +94,7 @@ exports.getbhajanCategoryUser = async(req,res)=>{
 exports.deletebhajanCategory = async(req,res)=>{
     try{
         const {id}=req.params;
-        const bhajanCategory = await bhajanCategory.findById(id);
+        const bhajanCategory = await BhajanCategory.findById(id);
         if(!bhajanCategory){
             return res.status(400).json({message:"Bhajan Mandal Not found",status:0});
         }
@@ -114,7 +115,7 @@ exports.deletebhajanCategory = async(req,res)=>{
 exports.getbhajanCategoryById = async(req,res)=>{
     try{
         const { id } = req.params;
-        const bhajanCategory = await bhajanCategory.findById(id);
+        const bhajanCategory = await BhajanCategory.findById(id);
         if(!bhajanCategory){
             return res.status(400).json({message:"Bhajan Mandal not found.",status:0});
         }
@@ -131,7 +132,7 @@ exports.updateBhajanCategory = [
         try{
             const { id }= req.params;
             const { ...updatedDetails } = req.body;
-            let bhajanCategory = await bhajanCategory.findById(id);
+            let bhajanCategory = await BhajanCategory.findById(id);
             if(!bhajanCategory){
                 return res.status(400).json({message:'Bhajan Category not found!.',status:0});
             }
@@ -144,7 +145,7 @@ exports.updateBhajanCategory = [
                 }
             updatedDetails.bhajan_image=`/uploads/bhajan_categories/${req.file.filename}`;
             }
-            bhajanCategory = await bhajanCategory.findByIdAndUpdate(
+            bhajanCategory = await BhajanCategory.findByIdAndUpdate(
                 id,
                 {$set:updatedDetails},
                 {new:true}
@@ -164,7 +165,7 @@ exports.updateBhajanCategoryStatus = async (req,res) =>{
         if(!bhajanCategoryId || !newStatus){
             return res.status(400).json({message:'Bhajan Mandal Id and status are required',status:0});
         }
-        const bhajanCategory = await bhajanCategory.findByIdAndUpdate(
+        const bhajanCategory = await BhajanCategory.findByIdAndUpdate(
             bhajanCategoryId,
             {status:newStatus},
             {new:true}
