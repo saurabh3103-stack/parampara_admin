@@ -1,0 +1,49 @@
+{
+    "project_info": {
+      "project_number": "649568467626",
+      "firebase_url": "https://parampara-user-e3b45-default-rtdb.firebaseio.com",
+      "project_id": "parampara-user-e3b45",
+      "storage_bucket": "parampara-user-e3b45.firebasestorage.app"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:649568467626:android:daab4e15ed35aa800a6ed3",
+          "android_client_info": {
+            "package_name": "com.ambitious.parampara"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyBVtKuWV2QiUzJtOAK8-ADZ2rzCtYJ1aHw"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      },
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:649568467626:android:2bb4ed7c9a5ff2fb0a6ed3",
+          "android_client_info": {
+            "package_name": "com.ambitious.paramparapartner"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyBVtKuWV2QiUzJtOAK8-ADZ2rzCtYJ1aHw"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }

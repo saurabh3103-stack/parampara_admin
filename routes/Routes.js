@@ -14,9 +14,10 @@ const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, upda
 const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,getPanditById } = require('../controllers/panditController');
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
-const { addToCart,getCartItems} = require("../controllers/cartController");
-const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress,updatePoojaBooking} = require("../controllers/orderController");
+const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
+const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking} = require("../controllers/orderController");
 const { createTransaction } = require("../controllers/transactionController");
+const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -75,6 +76,8 @@ router.post("/otp/send-otp", authenticateToken ,sendOtp);
 router.post("/otp/verify-otp", authenticateToken,verifyOtp);
 router.post("/cart/addCart",authenticateToken,addToCart);
 router.get("/cart/get-cart/:id",authenticateToken,getCartItems);
+router.delete("/cart/remove/:cart_id",authenticateToken,removeCartItem);
+router.delete("/cart/clear/:user_id", authenticateToken,removeAllCartItems);
 router.post("/transcation/create-transcation",authenticateToken,createTransaction);
 
 router.post("/order/pooja-booking",authenticateToken, createPoojaBooking); // Create Product Order
@@ -82,9 +85,19 @@ router.get("/orders/:orderId",authenticateToken, getOrder); // Get Product Order
 router.put("/orders/update-order",authenticateToken,updatePoojaBooking);
 router.post("/order/delivery-address",authenticateToken, addDeliveryAddress); // Add Delivery Address
 router.get("/order/delivery-address/:orderId",authenticateToken, getDeliveryAddress); // Get Delivery Address
-
 router.get("/orders",authenticateToken,getAllOrders);
-router.get('/order-address' ,getAllOrdersWithAddress);
+router.get('/order-address',authenticateToken,getAllOrdersWithAddress);
+router.get("/orders/user/:userId",authenticateToken, getPoojaOrdersByUserId);
+router.post("/orders/acceptReject",authenticateToken,acceptRejectBooking);
+// Bhajan Mandal
 
+
+router.post("/bhajanMandal/create-category",authenticateToken,createBhajanCategory);
+router.get("/bhajanMandal/category",authenticateToken,getbhajanCategory);
+router.get("/bhajanMandal/ctegory-user",authenticateToken,getbhajanCategoryUser);
+router.delete("/bhajanMandal/delete-category",authenticateToken,deletebhajanCategory);
+router.get("/bhajanMandal/category-id/:id",authenticateToken,getbhajanCategoryById);
+router.put("/bhajanMandal/update-category",authenticateToken,updateBhajanCategory);
+router.put("/bhajanMandal/update-category-status",authenticateToken,updateBhajanCategoryStatus);
 module.exports = router;
 

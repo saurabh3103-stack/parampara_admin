@@ -10,6 +10,10 @@ const poojaBookingSchema = new mongoose.Schema({
     type: Number,
     default: 0, // 0: Pending, 1: Confirmed, 2: Completed, etc.
   },
+  panditId: {
+    type: String,
+    default: null, // Default to null if no Pandit is assigned
+  },
   poojaDetails: {
     poojaId: {
       type: String,

@@ -148,7 +148,7 @@ exports.updatePoojaCategroy = [
       }
       if(req.file){
         if(poojaCategroy.pooja_image){
-          const oldImagePath = path.join(__dirname, '..', 'public', poojaCategory.pooja_image);
+          const oldImagePath = path.join(__dirname, '..', 'public', PoojaCategory.pooja_image);
           if(fs.existsSync(oldImagePath)){
             fs.unlinkSync(oldImagePath);
           }

@@ -182,3 +182,55 @@ exports.removeAllCartItems = async (req, res) => {
     }
 };
   
+exports.removeCartItem = async (req, res) => {
+  try {
+    const { cart_id } = req.params;
+    const cartItem = await Cart.findByIdAndDelete(cart_id);
+    if (!cartItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart item not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Cart item removed successfully",
+      cart_id: cartItem._id, // Return the removed item's ID for reference
+    });
+  } catch (error) {
+    console.error("Error removing cart item:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.removeAllCartItems = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id is required",
+      });
+    }
+    const result = await Cart.deleteMany({ user_id, order_status: 0 });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No cart items found for the user",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} cart item(s) removed successfully`,
+    });
+  } catch (error) {
+    console.error("Error removing all cart items:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
