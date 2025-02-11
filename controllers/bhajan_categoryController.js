@@ -42,7 +42,6 @@ exports.createBhajanCategory = [
     async (req,res)=>{
         try{
             const { ...bhajanCategory }=req.body;
-            console.log(bhajanCategory);
             let bhajanImageUrl = null ;
             if(req.file){
                 bhajanImageUrl = `uploads/bhajan_categories/${req,file.filename}`;
