@@ -104,7 +104,7 @@ exports.deletebhajanCategory = async(req,res)=>{
                 fs.unlink(imagePath);
             }
         }
-        await bhajanCategory.findByIdAndDelete(id);
+        await BhajanCategory.findByIdAndDelete(id);
         res.status(200).json({message:"Bhajan Category deleted successfully",status:1});
     }
     catch (error){
@@ -159,22 +159,29 @@ exports.updateBhajanCategory = [
 ];
 
 
-exports.updateBhajanCategoryStatus = async (req,res) =>{
-    try{
-        const { bhajanCategoryId , newStatus} = req.body;
-        if(!bhajanCategoryId || !newStatus){
-            return res.status(400).json({message:'Bhajan Mandal Id and status are required',status:0});
+exports.updateBhajanCategoryStatus = async (req, res) => {
+    try {
+        const { bhajanCategoryId, newStatus } = req.body;
+
+        // Validate input
+        if (!bhajanCategoryId || !newStatus) {
+            return res.status(400).json({ message: 'Bhajan Mandal Id and status are required', status: 0 });
         }
+
+        // Find and update the category
         const bhajanCategory = await BhajanCategory.findByIdAndUpdate(
             bhajanCategoryId,
-            {status:newStatus},
-            {new:true}
+            { status: newStatus },
+            { new: true }
         );
-        if(!this.updateBhajanCategory){
-            return res.status(400).json({message:'Pooja category not found.',status:0});
-        }
-        res.status(200).json({message:'Bhajan Mandal Status Update sccessfully',data:this.updateBhajanCategory,status:1});
+
+        // Check if category exists
+        if (!bhajanCategory) {
+            return res.status(400).json({ message: 'Bhajan Mandal category not found.', status: 0 });
+        }   
+        res.status(200).json({ message: 'Bhajan Mandal Status Updated successfully', data: bhajanCategory, status: 1 });
     } catch (error) {
-        res.status(500).json({message:error.message,status:0});
+        console.error("Error updating category:", error);
+        res.status(500).json({ message: error.message, status: 0 });
     }
 };

@@ -95,9 +95,9 @@ router.post("/orders/acceptReject",authenticateToken,acceptRejectBooking);
 router.post("/bhajanMandal/create-category",authenticateToken,createBhajanCategory);
 router.get("/bhajanMandal/category",authenticateToken,getbhajanCategory);
 router.get("/bhajanMandal/ctegory-user",authenticateToken,getbhajanCategoryUser);
-router.delete("/bhajanMandal/delete-category",authenticateToken,deletebhajanCategory);
+router.delete("/bhajanMandal/delete-category/:id",authenticateToken,deletebhajanCategory);
 router.get("/bhajanMandal/category-id/:id",authenticateToken,getbhajanCategoryById);
-router.put("/bhajanMandal/update-category",authenticateToken,updateBhajanCategory);
+router.put("/bhajanMandal/update-category/:id",authenticateToken,updateBhajanCategory);
 router.put("/bhajanMandal/update-category-status",authenticateToken,updateBhajanCategoryStatus);
 module.exports = router;
 
