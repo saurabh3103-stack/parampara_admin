@@ -149,7 +149,7 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
         title: "New Pooja Booking",
         body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
       },
-      token: fcmToken,
+      token: "fg1NLYWzTk6emXvvzBr9cg:APA91bGKZdBEZjeNPMSPVSekbzfW2sPP3YNZsQZPfkjhRlN-DSG4uqC4JsCnfWUEc7BB_LHcxQlUwymsNNC5IAsEO0xzxNc7N9fZ8wko16M0dS0ooxvbsbk",
       data: {
         bookingId: poojaBooking.bookingId,
       },
@@ -178,7 +178,6 @@ const acceptRejectBooking = async (req, res) => {
     if (!panditId || !bookingId || status === undefined) {
       return res.status(400).json({ message: "Missing required fields", status: 0 });
     }
-
     const poojaBooking = await PoojaBooking.findOne({ bookingId });
     if (!poojaBooking) {
       return res.status(404).json({ message: "Pooja booking not found", status: 0 });
@@ -196,7 +195,6 @@ const acceptRejectBooking = async (req, res) => {
     res.status(500).json({ message: "Error processing booking", error: error.message, status: 0 });
   }
 };
-
 
 // Get Product Order Details
 const getOrder = async (req, res) => {

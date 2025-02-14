@@ -3,66 +3,72 @@ const fs = require('fs');
 const path = require('path');
 const BhajanCategory= require('../models/bhajan_categoryModel');
 
-const ensureDirectoryExistence = (folderPath) => {
-    if(!fs.existsSync(folderPath)){
-        fs.mkdirSync(folderPath,{recursive:true});
+function ensureDirectoryExistence(folderPath) {
+    if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
     }
-};
+}
 
 const storage = multer.diskStorage({
-    destination:(req,file,cb)=>{
-        const folderPath = path.join(__dirname,'..','public','uploads','bhajan_category');
+    destination: (req, file, cb) => {
+        const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'bhajan_category');
         ensureDirectoryExistence(folderPath);
-        cb(null,folderPath);
+        cb(null, folderPath);
     },
-    filename:(req,file,cb)=>{
+    filename: (req, file, cb) => {
         const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null,uniqueName);
-    },
+        cb(null, uniqueName);
+    }
 });
 
-const fileFilter = (req,file,cb)=>{
-    const allowedTypes = ['image/jpeg','image/png','image/jpg'];
-    if(allowedTypes.includes(file.mimetype)){
-        cb(null,true);
-    }
-    else {
-        cb(new Error('Invaild file type. Only JPEG,PNG and JPG are allowed.'));
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG, and JPG are allowed.'));
     }
 };
+
 
 const upload = multer({
     storage,
     fileFilter,
-    limits:{fileSize: 5*1024*1024},
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB file size limit
 }).single('bhajan_image');
 
 exports.createBhajanCategory = [
     upload,
-    async (req,res)=>{
-        try{
-            const { ...bhajanCategory }=req.body;
-            console.log(req.body);
-            let bhajanImageUrl = null ;
-            if(req.file){
-                bhajanImageUrl = `uploads/bhajan_categories/${req,file.filename}`;
+    async (req, res) => {
+        try {
+            const { category, short_discription, long_discription, slug_url } = req.body;
+            let bhajanImageUrl = null;
+            if (req.file) {
+                bhajanImageUrl = `uploads/bhajan_category/${req.file.filename}`;
+            } else {
+                return res.status(400).json({ message: "File is not defined", status: 0 });
             }
+
             const addbhajanCategory = new BhajanCategory({
-                ...bhajanCategory,
-                bhajan_image:bhajanImageUrl,
+                category,
+                short_discription,
+                long_discription,
+                slug_url,
+                bhajan_image: bhajanImageUrl
             });
+
             await addbhajanCategory.save();
+
             return res.status(200).json({
-                message:'Bhajan Category Created successfully,',
-                data:addbhajanCategory,
-                status:1,
+                message: 'Bhajan Category Created successfully',
+                data: addbhajanCategory,
+                status: 1
             });
-        }
-        catch (error){
+        } catch (error) {
             res.status(500).json({
-                message:error.message,
-                status:0,
-            })
+                message: error.message,
+                status: 0
+            });
         }
     }
 ];
