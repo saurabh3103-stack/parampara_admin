@@ -19,6 +19,7 @@ const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAl
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
 const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan} = require("../controllers/bhajanmandalController");
+const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal } = require('../controllers/bhajanvideoController');
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -113,6 +114,10 @@ router.get("/bhajanMandal/active", authenticateToken,getActiveBhajans);
 router.put("/bhajanMandal/update-bhajan/:id", authenticateToken,updateBhajan);
 router.put("/bhajanMandal/bhajan-status/:id", authenticateToken,updateBhajanStatus);
 router.delete("/bhajanMandal/delete-bhajan/:id", authenticateToken,deleteBhajan);
+router.post('/bhajanMandal/add-video', authenticateToken, addVideo);
+router.put('/bhajanMandal/edit-video', authenticateToken, editVideo);
+router.delete('/bhajanMandal/delete/:video_id', authenticateToken, deleteVideo);
+router.get('/bhajanMandal/get-videos/:bhajan_mandal_id', authenticateToken, getVideosByBhajanMandal);
 
 
 // Bhajan Mandal Routes end

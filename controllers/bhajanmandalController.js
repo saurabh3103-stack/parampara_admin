@@ -38,33 +38,35 @@ exports.createBhajan = [
     async (req, res) => {
         try {
             const {
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,
-                short_discription, long_discription
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
+                short_discription, long_discription,address, city, location, state, country, pin_code, area
             } = req.body;
 
-            if (!bhajan_name || !slug_url || !bhajan_category || !bhajan_price || 
-                !bhajan_member || !short_discription || !long_discription) {
+            if (!bhajan_name || !slug_url || !bhajan_category || !bhajan_price || !exp_year ||
+                !bhajan_member || !short_discription || !long_discription || !address ||
+                !city || !location || !state || !country || !pin_code || !area) {
                 return res.status(400).json({ message: 'All required fields must be provided', status: 0 });
             }
 
             let bhajan_image = null;
             if (req.file) {
-                bhajan_image = `/uploads/bhajan_image/${req.file.filename}`; // 🛠️ Fix: Change `req,file.filename` to `req.file.filename`
+                bhajan_image = `/uploads/bhajan_image/${req.file.filename}`;
             }
 
             const newBhajan = new BhajanMandal({
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,
-                short_discription, long_discription, bhajan_image, status: 1
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
+                short_discription, long_discription, bhajan_image, status: 1,
+                mandali_address: { address, city, location, state, country, pin_code, area }
             });
 
             await newBhajan.save();
-
             res.status(201).json({ message: 'Bhajan Added Successfully', data: newBhajan, status: 1 });
         } catch (error) {
             res.status(500).json({ message: error.message, status: 0 });
         }
     },
 ];
+
 
 // **Get All Bhajans**
 exports.getAllBhajans = async (req, res) => {
@@ -119,8 +121,8 @@ exports.updateBhajan = [
     async (req, res) => {
         try {
             const {
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,
-                short_discription, long_discription
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
+                short_discription, long_discription,address, city, location, state, country, pin_code, area
             } = req.body;
 
             let bhajan = await BhajanMandal.findById(req.params.id);
@@ -134,8 +136,9 @@ exports.updateBhajan = [
             }
 
             bhajan = await BhajanMandal.findByIdAndUpdate(req.params.id, {
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,
-                short_discription, long_discription, bhajan_image
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
+                short_discription, long_discription, bhajan_image,
+                mandali_address: { address, city, location, state, country, pin_code, area }
             }, { new: true });
 
             res.status(200).json({ message: 'Bhajan updated successfully', data: bhajan, status: 1 });
