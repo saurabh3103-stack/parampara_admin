@@ -97,25 +97,34 @@ exports.getbhajanCategoryUser = async(req,res)=>{
     }
 };
 
-exports.deletebhajanCategory = async(req,res)=>{
-    try{
-        const {id}=req.params;
+exports.deletebhajanCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
         const bhajanCategory = await BhajanCategory.findById(id);
-        if(!bhajanCategory){
-            return res.status(400).json({message:"Bhajan Mandal Not found",status:0});
+
+        if (!bhajanCategory) {
+            return res.status(400).json({ message: "Bhajan Mandal Not found", status: 0 });
         }
-        if(bhajanCategory.bhajan_image){
-            const imagePath = path.join(__dirname, '..','public',bhajanCategory.bhajan_image);
-            if(fs.existsSync(imagePath)){
-                fs.unlink(imagePath);
+
+        // Delete image if it exists
+        if (bhajanCategory.bhajan_image) {
+            const imagePath = path.join(__dirname, '..', 'public', bhajanCategory.bhajan_image);
+            if (fs.existsSync(imagePath)) {
+                fs.unlink(imagePath, (err) => {
+                    if (err) console.error("Error deleting image:", err);
+                });
             }
         }
-        await BhajanCategory.findByIdAndDelete(id);res.status(200).json({message:"Bhajan Category deleted successfully",status:1});
-    }
-    catch (error){
-        res.status(500).json({message:error.message,status:0});
+
+        // Delete the category from the database
+        await BhajanCategory.findByIdAndDelete(id);
+
+        res.status(200).json({ message: "Bhajan Category deleted successfully", status: 1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
     }
 };
+
 
 exports.getbhajanCategoryById = async(req,res)=>{
     try{
