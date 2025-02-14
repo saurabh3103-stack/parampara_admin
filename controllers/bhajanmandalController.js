@@ -174,3 +174,19 @@ exports.deleteBhajan = async (req, res) => {
         res.status(500).json({ message: error.message, status: 0 });
     }
 };
+
+// **Get Bhajans by Category ID**
+exports.getBhajansByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const bhajans = await BhajanMandal.find({ bhajan_category: categoryId });
+
+        if (bhajans.length === 0) {
+            return res.status(404).json({ message: 'No Bhajans found for this category', status: 0 });
+        }
+
+        res.status(200).json({ message: 'Bhajans fetched successfully', data: bhajans, status: 1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+};

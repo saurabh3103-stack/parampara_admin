@@ -18,7 +18,7 @@ const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../
 const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking} = require("../controllers/orderController");
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
-const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan} = require("../controllers/bhajanmandalController");
+const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory} = require("../controllers/bhajanmandalController");
 const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal } = require('../controllers/bhajanvideoController');
 // Define other routes (existing ones)
 
@@ -114,6 +114,7 @@ router.get("/bhajanMandal/active", authenticateToken,getActiveBhajans);
 router.put("/bhajanMandal/update-bhajan/:id", authenticateToken,updateBhajan);
 router.put("/bhajanMandal/bhajan-status/:id", authenticateToken,updateBhajanStatus);
 router.delete("/bhajanMandal/delete-bhajan/:id", authenticateToken,deleteBhajan);
+router.get("/bhajanMandal/all-bhajanCategoryId/:categoryId",authenticateToken,getBhajansByCategory);
 router.post('/bhajanMandal/add-video', authenticateToken, addVideo);
 router.put('/bhajanMandal/edit-video', authenticateToken, editVideo);
 router.delete('/bhajanMandal/delete/:video_id', authenticateToken, deleteVideo);
