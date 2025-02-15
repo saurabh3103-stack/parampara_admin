@@ -3,6 +3,7 @@ const PoojaBooking = require("../models/PoojaBooking");
 const DeliveryAddress = require("../models/DeliveryAddress");
 const admin = require("../config/firebase");
 const pandit = require("../models/panditModel");
+const User = require("../models/userModel");
 const generateNumericUUID = () => {
     const uuid = uuidv4().replace(/-/g, ''); // Remove hyphens
     const numericId = uuid.split('').map(char => char.charCodeAt(0) % 10).join(''); // Convert each character to a number
@@ -67,7 +68,6 @@ const createPoojaBooking = async (req, res) => {
     });
   }
 };
-
 const getDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radius of Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -82,44 +82,120 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // Distance in km
 };
 
-const assignPandit = async (poojaBooking, userLat, userLong, res) => {
+// Assign a Pandit and keep trying until one accepts the booking
+const assignPandit = async (poojaBooking, userLat, userLong, res, index = 0) => {
   try {
     let pandits = await pandit.find();
     if (!pandits.length) {
       return res.status(404).json({ message: "No available Pandits", status: 0 });
     }
+
+    // Sort Pandits by distance (nearest first)
     pandits = pandits
       .map((pandit) => ({
         ...pandit._doc,
         distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude),
       }))
-      .sort((a, b) => b.distance - a.distance);
-    const assignToNext = async (index = 0) => {
-      if (index >= pandits.length) {
-        return res.status(200).json({ message: "No Pandit accepted the booking.", status: 0 });
-      }
-      const pandit = pandits[index];
-      const accepted = await sendNotificationToPandit(pandit.fcm_tokken, poojaBooking);
-      if (accepted) {
-        console.log(`✅ Pandit ${pandit.name} accepted the booking.`);
-        return res.status(200).json({
-          message: "Pooja booking confirmed, Pandit assigned.",
-          pandit,
-          poojaBooking,
-          status: 1,
-        });
-      } else {
-        console.log(`❌ Pandit ${pandit.name} rejected the booking. Trying next...`);
-        assignToNext(index + 1);
-      }
-    };
-    assignToNext();
+      .sort((a, b) => a.distance - b.distance); // Nearest first
+
+    if (index >= pandits.length) {
+      return res.status(200).json({ message: "No Pandit accepted the booking.", status: 0 });
+    }
+
+    const currentPandit = pandits[index];
+
+    console.log(`📩 Sending request to Pandit ${currentPandit.name} (Distance: ${currentPandit.distance} km)`);
+
+    // Send Notification to Pandit
+    const notificationSent = await sendNotificationToPandit(currentPandit.fcm_tokken, poojaBooking);
+
+    if (notificationSent) {
+      // Wait for Pandit's response via `acceptRejectBooking`
+      console.log(`⏳ Waiting for response from Pandit ${currentPandit.name}...`);
+    } else {
+      console.log(`❌ Failed to send notification to Pandit ${currentPandit.name}, trying next one.`);
+      assignPandit(poojaBooking, userLat, userLong, res, index + 1);
+    }
   } catch (error) {
     console.error("❌ Error assigning Pandit:", error.message);
     res.status(500).json({ message: "Error assigning Pandit", error: error.message, status: 0 });
   }
 };
 
+// Send notification to Pandit
+const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
+  if (!fcmToken) {
+    console.log("❌ No FCM token available for this Pandit.");
+    return false;
+  }
+
+  const message = {
+    token: fcmToken,
+    notification: {
+      title: "New Pooja Booking",
+      body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
+    },
+    data: {
+      booking_id: poojaBooking.bookingId.toString(),
+      click_action: "OPEN_ACTIVITY",
+    },
+    android: {
+      priority: "high",
+      notification: {
+        sound: "default",
+        click_action: "OPEN_ACTIVITY",
+        channel_id: "FCM_CHANNEL_ID",
+      },
+    },
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log(`📩 Notification sent to Pandit with token: ${fcmToken}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Error sending notification:", error.message);
+    return false;
+  }
+};
+
+// Accept or Reject Booking
+const acceptRejectBooking = async (req, res) => {
+  try {
+    const { panditId, bookingId, status, userLat, userLong } = req.body;
+
+    if (!panditId || !bookingId || status === undefined) {
+      return res.status(400).json({ message: "Missing required fields", status: 0 });
+    }
+
+    const poojaBooking = await PoojaBooking.findOne({ bookingId });
+    if (!poojaBooking) {
+      return res.status(404).json({ message: "Pooja booking not found", status: 0 });
+    }
+
+    if (status === 1) {
+      // Pandit accepted
+      poojaBooking.panditId = panditId;
+      poojaBooking.bookingStatus = 2; // Confirmed
+      await poojaBooking.save();
+      const user = await User.findOne({_id: poojaBooking.userId});
+      if (user && user.fcm_tokken) {
+        await sendNotificationToUser(user.fcm_tokken, bookingId);
+      }
+
+      return res.status(200).json({ message: "Booking accepted.", status: 1 });
+    } else {
+      // Pandit rejected, assign next Pandit
+      assignPandit(poojaBooking, userLat, userLong, res, req.body.index + 1);
+      return res.status(200).json({ message: "Booking Send New Pandit.", status: 1 });
+    }
+  } catch (error) {
+    console.error("❌ Error processing accept/reject booking:", error.message);
+    res.status(500).json({ message: "Error processing booking", error: error.message, status: 0 });
+  }
+};
+
+// Update Pooja Booking and Start Assigning Pandit
 const updatePoojaBooking = async (req, res) => {
   console.log(req.body);
   try {
@@ -128,73 +204,58 @@ const updatePoojaBooking = async (req, res) => {
     if (!bookingId || !transactionId || !transactionStatus || !transactionDate || !userLat || !userLong) {
       return res.status(400).json({ message: "Missing required fields", status: 0 });
     }
+
     const poojaBooking = await PoojaBooking.findOne({ bookingId });
     if (!poojaBooking) {
       return res.status(404).json({ message: "Pooja booking not found", status: 0 });
     }
+
     poojaBooking.bookingStatus = 1; // Mark as confirmed
     poojaBooking.transactionDetails = { transactionId, transactionStatus, transactionDate };
     await poojaBooking.save();
+
+    // Start finding an available Pandit
     assignPandit(poojaBooking, userLat, userLong, res);
+    res.status(200).json({message: "Booking Confirm", status: 1})
   } catch (error) {
     console.error("❌ Error updating Pooja booking:", error.message);
     res.status(500).json({ message: "Error updating Pooja booking", error: error.message, status: 0 });
   }
 };
 
-const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
-  return new Promise((resolve) => {
-    const message = {
+// sEND NOTIFICATION TO USER 
+
+const sendNotificationToUser = async (userFcmToken, bookingId) => {
+  const message = {
+    message: {
+      token: userFcmToken,
       notification: {
-        title: "New Pooja Booking",
-        body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
+        title: "Booking Confirmed",
+        body: `Your booking (ID: ${bookingId}) has been accepted by the Pandit.`,
       },
-      token: "fg1NLYWzTk6emXvvzBr9cg:APA91bGKZdBEZjeNPMSPVSekbzfW2sPP3YNZsQZPfkjhRlN-DSG4uqC4JsCnfWUEc7BB_LHcxQlUwymsNNC5IAsEO0xzxNc7N9fZ8wko16M0dS0ooxvbsbk",
       data: {
-        bookingId: poojaBooking.bookingId,
+        booking_id: bookingId.toString(),
+        click_action: "OPEN_ACTIVITY",
       },
-    };
+      android: {
+        priority: "high",
+        notification: {
+          sound: "default",
+          click_action: "OPEN_ACTIVITY",
+          channel_id: "FCM_CHANNEL_ID",
+        },
+      },
+    },
+  };
 
-    admin.messaging()
-      .send(message)
-      .then(() => {
-        console.log(`📩 Notification sent to Pandit with token: ${fcmToken}`);
-        
-        setTimeout(() => {
-          const accepted = Math.random() > 0.5;
-          resolve(accepted);
-        }, 10000);
-      })
-      .catch((error) => {
-        console.error("❌ Error sending notification:", error.message);
-        resolve(false);
-      });
-  });
-};
-
-const acceptRejectBooking = async (req, res) => {
   try {
-    const { panditId, bookingId, status, userLat, userLong } = req.body;
-    if (!panditId || !bookingId || status === undefined) {
-      return res.status(400).json({ message: "Missing required fields", status: 0 });
-    }
-    const poojaBooking = await PoojaBooking.findOne({ bookingId });
-    if (!poojaBooking) {
-      return res.status(404).json({ message: "Pooja booking not found", status: 0 });
-    }
-    if (status === 1) {
-      poojaBooking.panditId = panditId;
-      poojaBooking.bookingStatus = 2; // Confirmed
-      await poojaBooking.save();
-      return res.status(200).json({ message: "Booking accepted.", status: 1 });
-    } else {
-      assignPandit(poojaBooking, userLat, userLong, res); // Reassign to next Pandit
-    }
+    await admin.messaging().send(message.message);
+    console.log(`📩 Notification sent to User with token: ${userFcmToken}`);
   } catch (error) {
-    console.error("❌ Error processing accept/reject booking:", error.message);
-    res.status(500).json({ message: "Error processing booking", error: error.message, status: 0 });
+    console.error("❌ Error sending notification to User:", error.message);
   }
 };
+
 
 // Get Product Order Details
 const getOrder = async (req, res) => {

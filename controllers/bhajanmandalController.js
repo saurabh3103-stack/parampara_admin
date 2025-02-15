@@ -182,7 +182,7 @@ exports.getBhajansByCategory = async (req, res) => {
         const bhajans = await BhajanMandal.find({ bhajan_category: categoryId });
 
         if (bhajans.length === 0) {
-            return res.status(404).json({ message: 'No Bhajans found for this category', status: 0 });
+            return res.status(200).json({ message: 'No Bhajans found for this category', status: 0 });
         }
 
         res.status(200).json({ message: 'Bhajans fetched successfully', data: bhajans, status: 1 });
