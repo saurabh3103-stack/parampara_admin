@@ -10,6 +10,7 @@ exports.addToCart = async (req, res) => {
       productType,
       product_id,
       product_name,
+      product_image,
       product_amount,
       quantity,
       pooja_date,
@@ -28,8 +29,7 @@ exports.addToCart = async (req, res) => {
       !product_amount ||
       !quantity ||
       !pooja_date ||
-      !pooja_time ||
-      !isSamagri 
+      !pooja_time 
     ) {
       return res.status(400).json({
         success: false,
@@ -76,6 +76,7 @@ exports.addToCart = async (req, res) => {
       productType,
       product_id,
       product_name,
+      product_image,
       product_amount,
       quantity: quantityNumber,  // Save quantity as a number
       pooja_date,

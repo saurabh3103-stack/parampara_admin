@@ -4,6 +4,7 @@ const DeliveryAddress = require("../models/DeliveryAddress");
 const admin = require("../config/firebase");
 const pandit = require("../models/panditModel");
 const User = require("../models/userModel");
+const MandaliBooking = require("../models/BhajanMandalBooking");
 const generateNumericUUID = () => {
     const uuid = uuidv4().replace(/-/g, ''); // Remove hyphens
     const numericId = uuid.split('').map(char => char.charCodeAt(0) % 10).join(''); // Convert each character to a number
@@ -15,59 +16,38 @@ const generateNumericUUID = () => {
 const createPoojaBooking = async (req, res) => {
   console.log(req.body);
   try {
-    const {
-      poojaId,
-      poojaName,
-      poojaType,
-      isSamagriIncluded,
-      date,
-      time,
-      userId,
-      username,
-      contactNumber,
-      email,
-      amount,
-      quantity,
-    } = req.body;
+    const { poojaId,poojaName,poojaType,isSamagriIncluded,date,time,userId,
+      username,contactNumber,email,amount,quantity,} = req.body;
     const newPoojaBooking = new PoojaBooking({
       bookingId: generateNumericUUID(),
-      poojaDetails: {
-        poojaId,
-        poojaName,
-        poojaType,
-        isSamagriIncluded,
-      },
-      userDetails: {
-        userId,
-        username,
-        contactNumber,
-        email,
-      },
-      schedule: {
-        date,
-        time,
-      },
-      paymentDetails: {
-        amount,
-        quantity,
-      },
+      poojaDetails: {poojaId,poojaName,poojaType,isSamagriIncluded,},
+      userDetails: {userId,username,contactNumber,email,},
+      schedule: {date,time,},
+      paymentDetails: {amount,quantity,},
     });
     await newPoojaBooking.save();
     console.log(newPoojaBooking);
-    res.status(201).json({
-      message: "Pooja booking created successfully",
-      poojaBooking: newPoojaBooking,
-      status: 1,
-    });
+    res.status(201).json({message: "Pooja booking created successfully",poojaBooking: newPoojaBooking,status: 1,});
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({
-      message: "Error creating Pooja booking",
-      error: error.message,
-      status: 0,
+    res.status(500).json({message: "Error creating Pooja booking",error: error.message,status: 0,
     });
   }
 };
+
+// Bhajan Mandali Booking
+// const createBhanjanMandaliBooking = async (req,res)=>{
+//   console.log(req.body);
+//   try{
+//     const {}=req.body;
+//   }catch (error){
+//     console.log(error.message);
+//     res.status(500).json({message: "Error creating Pooja booking",error: error.message,status: 0,
+//     });
+//   }
+// }
+
+// Bhajan Mandali Booking End
 const getDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radius of Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
