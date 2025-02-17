@@ -44,7 +44,7 @@ const createPoojaBooking = async (req, res) => {
 //     console.log(error.message);
 //     res.status(500).json({message: "Error creating Pooja booking",error: error.message,status: 0,
 //     });
-//   }
+//   }  
 // }
 
 // Bhajan Mandali Booking End
