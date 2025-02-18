@@ -15,7 +15,7 @@ const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
-const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking} = require("../controllers/orderController");
+const { createPoojaBooking,createBhajanBooking,getOrder,addDeliveryAddress,getDeliveryAddress, getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking} = require("../controllers/orderController");
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
 const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory} = require("../controllers/bhajanmandalController");
@@ -119,7 +119,7 @@ router.post('/bhajanMandal/add-video', authenticateToken, addVideo);
 router.put('/bhajanMandal/edit-video', authenticateToken, editVideo);
 router.delete('/bhajanMandal/delete/:video_id', authenticateToken, deleteVideo);
 router.get('/bhajanMandal/get-videos/:bhajan_mandal_id', authenticateToken, getVideosByBhajanMandal);
-
+// router.get('/bhajan-mandali/booking',authenticateToken,createBhajanBooking);
 
 // Bhajan Mandal Routes end
 module.exports = router;

@@ -36,16 +36,18 @@ const createPoojaBooking = async (req, res) => {
 };
 
 // Bhajan Mandali Booking
-// const createBhanjanMandaliBooking = async (req,res)=>{
-//   console.log(req.body);
-//   try{
-//     const {}=req.body;
-//   }catch (error){
-//     console.log(error.message);
-//     res.status(500).json({message: "Error creating Pooja booking",error: error.message,status: 0,
-//     });
-//   }  
-// }
+const createBhanjanMandaliBooking = async (req,res)=>{
+  console.log(req.body);
+  try{
+    const {mandaliId,mandaliName,mandaliType,userId,username,contactNumber,
+      email,date,time,amount,quantity
+    }=req.body;
+  }catch (error){
+    console.log(error.message);
+    res.status(500).json({message: "Error creating Pooja booking",error: error.message,status: 0,
+    });
+  }  
+}
 
 // Bhajan Mandali Booking End
 const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -158,7 +160,7 @@ const acceptRejectBooking = async (req, res) => {
       poojaBooking.panditId = panditId;
       poojaBooking.bookingStatus = 2; // Confirmed
       await poojaBooking.save();
-      const user = await User.findOne({_id: poojaBooking.userId});
+      const user = await User.findOne({bookingId: poojaBooking.userId});
       if (user && user.fcm_tokken) {
         await sendNotificationToUser(user.fcm_tokken, bookingId);
       }
@@ -208,7 +210,7 @@ const updatePoojaBooking = async (req, res) => {
 const sendNotificationToUser = async (userFcmToken, bookingId) => {
   const message = {
     message: {
-      token: userFcmToken,
+      token: 'cGMS8q6OTcuqoTGaMyFLtZ:APA91bFtl6coZzAmZEKAbffkMx0xEd7fPNfkoAw5B8yMJhR2gPNmn3aWNjaD-k7apugBJqXvbPrGxhfFKdcru_irfKYQpwhBhdp3LUlly1kmVE2RIlYOYnI',
       notification: {
         title: "Booking Confirmed",
         body: `Your booking (ID: ${bookingId}) has been accepted by the Pandit.`,
