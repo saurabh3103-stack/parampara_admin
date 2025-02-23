@@ -2,6 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Pooja = require('../models/PoojaModel');
+const PoojaBooking = require('../models/PoojaBooking');
 const httpMocks = require('node-mocks-http');
 const { createPoojaSamagri } = require('../controllers/poojaSamagriController');
 
@@ -151,7 +152,6 @@ exports.updatePoojaById = [
       if (!updatedPooja) {
         return res.status(404).json({ message: 'Pooja not found.', status: 0 });
       }
-
       // Handle samagriData if pooja_Samegristatus is 1
       if (req.body.pooja_Samegristatus === '1' && req.body.samagriData) {
         const samagriArray = JSON.parse(req.body.samagriData);
@@ -165,7 +165,6 @@ exports.updatePoojaById = [
                 ...samagri,
               },
             });
-
             const mockRes = httpMocks.createResponse();
             await updatePoojaSamagri(mockReq, mockRes); // Ensure `updatePoojaSamagri` is implemented properly
             const samagriResponseData = mockRes._getJSONData();
@@ -275,3 +274,32 @@ exports.deletePooja = async (req, res) => {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+
+// Get Pooja Booking List for Pandit 
+
+exports.getPoojaBookingPandit =async(req,res)=>{
+  try{
+    const {panditId}= req.params;
+    const poojaBooking = await PoojaBooking.findOne({panditId: panditId });
+    if (!poojaBooking) {
+      return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
+    }
+    return res.status(200).json({ message: "Pooja Booking Details", status: 1, data: poojaBooking });
+  }catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}
+
+exports.getPoojaBookingUser = async(req,res)=>{
+  try{
+    const {userId}= req.params;
+    const poojaBooking = await PoojaBooking.findOne({});
+    if(!poojaBooking){
+      return res.status(404).json({message:"No Pooja Booking Found",status:0});
+    }
+    return res.status(200).json({message:"Pooja Booking Details",status:1,data:poojaBooking});
+  }
+  catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}

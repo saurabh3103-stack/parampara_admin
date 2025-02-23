@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema({
   pincode: { type: String },
   status: { type: String, default: 'active' },
   otp: { type: String, default: null },
+  otpExpire: {type:Date},
   approved: { type: Boolean, default: true },
   otp_verified: { type: Boolean, default: null },
   created_at: { type: Date, default: Date.now },

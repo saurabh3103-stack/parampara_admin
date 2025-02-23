@@ -10,7 +10,7 @@ const bhajanBookingSchema = new mongoose.Schema({
         type: Number,
         default: 0, // 0: Pending, 1: Confirmed, 2: Completed, etc.
       },
-      BhajanMandalDetails: {
+      bookingDetails: {
         mandaliId: {
           type: String,
           required: true,
@@ -19,9 +19,9 @@ const bhajanBookingSchema = new mongoose.Schema({
           type: String,
           required: true,
         },
-        mandaliType: {
+        Type: {
           type: String,
-          required: true, // Example: "Havan", "Jaap", etc.
+          default: true, // Example: "Havan", "Jaap", etc.
         },
       },
       userDetails: {

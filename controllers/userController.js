@@ -162,3 +162,79 @@ exports.updateUserStatus = async (req, res) => {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+
+exports.forgetpassword = async (req,res)=>{
+  try{
+    const {email}=req.body;
+    if(!email){
+      res.status(200).json({message:'Email is required',status:0});
+    }
+    const user = await User.findOne({email});
+    console.log(user);
+    if(!user){
+      return res.status(200).json({message:'User not found',status:0});
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    otpExpire = Date.now() + 15*60*1000;
+    await User.findOneAndUpdate({email},{otp,otpExpire},{new:true});
+    res.status(200).json({message:'OTP sent to your email',status:1,otp:otp});
+  }catch(error){
+    return res.status(500).json({message:error.message,status:0});
+  }
+}
+
+
+exports.verifyOtpUser = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required', status: 0 });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found', status: 0 });
+    }
+
+    console.log("Stored OTP:", user.otp);
+    console.log("Stored OTP Expire:", user.otpExpire, typeof user.otpExpire);
+
+    // Ensure `otpExpire` is a Date before comparing
+    if (!user.otp || user.otp.toString() !== otp.toString() || new Date(user.otpExpire) < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP', status: 0 });
+    }
+
+    res.status(200).json({ message: 'OTP verified successfully', status: 1 });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
+
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: 'Email, and new password are required', status: 0 });
+    }
+    // Find the pandit by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found', status: 0 });
+    }
+    // Hash the new password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    // Update the pandit's password and clear the OTP fields using an update query
+    await User.findOneAndUpdate(
+      { email },
+      { password: hashedPassword, otp: undefined, otpExpires: undefined },
+      { new: true }
+    );
+    res.status(200).json({ message: 'Password reset successfully', status: 1 });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};

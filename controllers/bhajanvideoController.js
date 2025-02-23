@@ -75,3 +75,19 @@ exports.getVideosByBhajanMandal = async (req, res) => {
     }
 };
 
+
+
+exports.getactiveVideosByBhajanMandal = async (req, res) => {
+    try {
+        const { bhajan_mandal_id } = req.params;
+
+        const videos = await Video.find({ bhajan_mandal_id, status: 1 });
+        if (!videos.length) {
+            return res.status(404).json({ message: "No videos found", status: 0 });
+        }
+
+        res.status(200).json({ message: "Videos fetched successfully", data: videos, status: 1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+};

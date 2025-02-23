@@ -23,7 +23,7 @@ const poojaBookingSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-    poojaType: {
+    Type: {
       type: String,
       required: true, // Example: "Havan", "Jaap", etc.
     },
