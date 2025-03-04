@@ -11,7 +11,7 @@ const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatu
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
-const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,getPanditById,createPanditCategory,forgotPassword,verifyOtppandit,resetpassword } = require('../controllers/panditController');
+const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,getPanditById,createPanditCategory,getPanditCategoryByPanditId,forgotPassword,verifyOtppandit,resetpassword } = require('../controllers/panditController');
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
@@ -20,10 +20,11 @@ const { createPoojaBooking,createBhanjanMandaliBooking,getBhajanOrder,getOrder,a
     updateMandaliOrder} = require("../controllers/orderController");
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
-const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory} = require("../controllers/bhajanmandalController");
+const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin} = require("../controllers/bhajanmandalController");
 const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal,getactiveVideosByBhajanMandal } = require('../controllers/bhajanvideoController');
-
 const { createCategory,getAllCategories,getActiveCategories,getCategoryById,updateCategory,deleteCategory,activeInactive}= require('../controllers/EcommerceController/ProductCategoryController');
+const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus } = require('../controllers/EcommerceController/ProductController');
+const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -96,6 +97,7 @@ router.post('/pandit/login-pandit',authenticateToken,loginPandit);
 router.get('/pandit/get-pandit/:id',authenticateToken,getPanditById);
 router.get('/pandit/pooja-booking/:panditId',authenticateToken,getPoojaBookingPandit);
 router.put('/pandit/update-category',authenticateToken,createPanditCategory);
+router.get('/pandit/get-category/:pandit_id',authenticateToken,getPanditCategoryByPanditId);
 router.post('/pandit/forget-password',authenticateToken,forgotPassword);
 router.post('/pandit/verify-otp',authenticateToken,verifyOtppandit);
 router.put('/pandit/reset-password',authenticateToken,resetpassword);
@@ -111,7 +113,7 @@ router.post("/transcation/create-transcation",authenticateToken,createTransactio
 
 // Bhajan Mandal Routes Start
 
-
+router.post("/bhajanMandal/login",authenticateToken,bhajanLogin);
 router.post("/bhajanMandal/create-category",authenticateToken,createBhajanCategory);
 router.get("/bhajanMandal/category",authenticateToken,getbhajanCategory);
 router.get("/bhajanMandal/ctegory-user",authenticateToken,getbhajanCategoryUser);
@@ -146,8 +148,24 @@ router.put("/product/update-category/:id",authenticateToken,updateCategory);
 router.delete("/product/delete-category/:id",authenticateToken,deleteCategory);
 router.patch("/product/category/update-status/:id",authenticateToken,activeInactive); 
 
+router.post("/product/add-product",authenticateToken,addProduct);
+router.put("/product/update-product/:id",authenticateToken,addProduct);
+router.get("/product/get-all",authenticateToken,getAllProduct);
+router.get("/product/get-product/:id",authenticateToken,getProductById);
+router.delete("/product/delete/:id",authenticateToken,deleteProduct);
+router.patch("/product/update-status/:id",authenticateToken,updateStatus);
+router.put("/product/update-quantity/:id",authenticateToken,updateQuantity);
+router.put("/product/:id/featured",authenticateToken,updateFeaturedStatus)
 // Ecommerce Section 
 
+// Story Section 
+router.post("/story/add",authenticateToken,addStory);
+router.get("/story/",authenticateToken,getStories);
+router.delete("/story/:id",authenticateToken,deleteStory);
+router.post("/story/:storyId/:subStoryIndex/images",authenticateToken,uploadSubStoryImages);
+router.get("/story/:id",authenticateToken,getStoryById);
+router.put("/story/update-story/:id",authenticateToken,updateStory);
+// Story Section
 
 module.exports = router;
 

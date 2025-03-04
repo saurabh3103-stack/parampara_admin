@@ -1,6 +1,8 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10; // Define the number of salt rounds for hashing
 const BhajanMandal = require('../models/bhajanmandalModel');
 
 const storage = multer.diskStorage({
@@ -36,15 +38,18 @@ const upload = multer({
 exports.createBhajan = [
     upload,
     async (req, res) => {
+        console.log(req.body);
         try {
             const {
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
-                short_discription, long_discription,address, city, location, state, country, pin_code, area
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
+                short_discription, long_discription, address, city, location, state, country, pin_code, area,
+                owner_name, owner_email, owner_phone, owner_password
             } = req.body;
 
             if (!bhajan_name || !slug_url || !bhajan_category || !bhajan_price || !exp_year ||
                 !bhajan_member || !short_discription || !long_discription || !address ||
-                !city || !location || !state || !country || !pin_code || !area) {
+                !city || !location || !state || !country || !pin_code || !area ||
+                !owner_name || !owner_email || !owner_phone || !owner_password) {
                 return res.status(400).json({ message: 'All required fields must be provided', status: 0 });
             }
 
@@ -53,10 +58,15 @@ exports.createBhajan = [
                 bhajan_image = `/uploads/bhajan_image/${req.file.filename}`;
             }
 
+            // Hash the owner's password
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(owner_password, salt);
+
             const newBhajan = new BhajanMandal({
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
                 short_discription, long_discription, bhajan_image, status: 1,
-                mandali_address: { address, city, location, state, country, pin_code, area }
+                mandali_address: { address, city, location, state, country, pin_code, area },
+                bhajan_owner: { owner_name: owner_name, owner_email: owner_email, owner_phone: owner_phone, owner_password: hashedPassword }
             });
 
             await newBhajan.save();
@@ -66,6 +76,8 @@ exports.createBhajan = [
         }
     },
 ];
+
+
 
 
 // **Get All Bhajans**
@@ -190,3 +202,38 @@ exports.getBhajansByCategory = async (req, res) => {
         res.status(500).json({ message: error.message, status: 0 });
     }
 };
+
+exports.bhajanLogin = async (req, res) => {
+    const { owner_email, owner_password } = req.body;
+    if (!owner_email || !owner_password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+    try {
+        const bhajanMandal = await BhajanMandal.findOne({ 'bhajan_owner.owner_email': owner_email });
+        if (!bhajanMandal) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
+        if (!bhajanMandal.bhajan_owner || !bhajanMandal.bhajan_owner.owner_password) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
+        const storedHashedPassword = bhajanMandal.bhajan_owner.owner_password;
+        if (typeof storedHashedPassword !== 'string' || typeof owner_password !== 'string') {
+            return res.status(400).json({ message: 'Invalid password format' });
+        }
+        const isMatch = await bcrypt.compare(owner_password, storedHashedPassword);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
+        res.json({
+            message: 'Login successful',
+            user: {
+                email: bhajanMandal.bhajan_owner.owner_email,
+                name: bhajanMandal.bhajan_owner.owner_name, // Adjust according to your DB
+                id: bhajanMandal._id
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+

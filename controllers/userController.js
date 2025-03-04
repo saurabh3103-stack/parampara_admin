@@ -191,12 +191,10 @@ exports.verifyOtpUser = async (req, res) => {
     if (!email || !otp) {
       return res.status(400).json({ message: 'Email and OTP are required', status: 0 });
     }
-
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found', status: 0 });
     }
-
     console.log("Stored OTP:", user.otp);
     console.log("Stored OTP Expire:", user.otpExpire, typeof user.otpExpire);
 

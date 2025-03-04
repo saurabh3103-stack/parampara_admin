@@ -5,7 +5,7 @@ const ProductCategory = require("../../models/EcommerceModel/ProductCategoryMode
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'product');
+        const folderPath = path.join(__dirname, '../..', 'public', 'uploads', 'product');
         if (!fs.existsSync(folderPath)) {
             fs.mkdirSync(folderPath, { recursive: true });
         }
@@ -42,7 +42,7 @@ exports.createCategory = [
         const { category_name, category_image, discription,slug_url } = req.body;
         let productImageUrl = null;
             if (req.file) {
-                productImageUrl = `uploads/bhajan_category/${req.file.filename}`;
+                productImageUrl = `uploads/product/${req.file.filename}`;
             } else {
                 return res.status(400).json({ message: "File is not defined", status: 0 });
             }
@@ -92,25 +92,51 @@ exports.getCategoryById = async (req, res) => {
 };
 
 // Update Product Category
-exports.updateCategory = async (req, res) => {
-    try {
-        const { category_name, category_image, discription,slug_url, status } = req.body;
-        const updatedCategory = await ProductCategory.findByIdAndUpdate(
-            req.params.id,
-            { category_name, category_image, discription,slug_url, status },
-            { new: true }
-        );
+exports.updateCategory = [
+    upload, 
+    async (req, res) => {
+        try {
+            const { category_name, discription, slug_url, status } = req.body;
+            const categoryId = req.params.id;
+            const existingCategory = await ProductCategory.findById(categoryId);
+            if (!existingCategory) {
+                return res.status(404).json({ message: "Category not found", status: 0 });
+            }
 
-        if (!updatedCategory) {
-            return res.status(404).json({ message: "Category not found", status: 0 });
+            // Handle new image upload
+            let updatedImageUrl = existingCategory.category_image; // Keep old image by default
+            if (req.file) {
+                // New image uploaded, update path
+                updatedImageUrl = `uploads/product/${req.file.filename}`;
+
+                // Delete old image from server (if exists)
+                const oldImagePath = path.join(__dirname, '../..', 'public', existingCategory.category_image);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+
+            // Update category
+            const updatedCategory = await ProductCategory.findByIdAndUpdate(
+                categoryId,
+                {
+                    category_name,
+                    category_image: updatedImageUrl,
+                    discription,
+                    slug_url,
+                    status,
+                },
+                { new: true }
+            );
+
+            res.status(200).json({ message: "Category updated successfully", status: 1, data: updatedCategory });
+
+        } catch (error) {
+            res.status(500).json({ message: error.message, status: 0 });
         }
-
-        res.status(200).json({ message: "Category updated successfully", status: 1, data: updatedCategory });
-
-    } catch (error) {
-        res.status(500).json({ message: error.message, status: 0 });
     }
-};
+];
+
 
 // Delete Product Category
 exports.deleteCategory = async (req, res) => {

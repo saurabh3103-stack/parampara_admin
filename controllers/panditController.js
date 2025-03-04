@@ -85,44 +85,73 @@ exports.createPanditCategory = async(req,res) =>{
   }
 };
 
+exports.getPanditCategoryByPanditId = async (req, res) => {
+  try {
+    const { pandit_id } = req.params; // Get pandit_id from request params
+    console.log("Fetching categories for Pandit ID:", pandit_id);
+
+
+    const categories = await PanditCategory.find({
+      pandit_id: pandit_id, 
+      status: "1" 
+    }).lean();
+
+    if (categories.length === 0) {
+      return res.status(200).json({ message: "No categories found", status: 0 });
+    }
+
+    res.status(200).json({ message: "Categories fetched", status: 1, data: categories });
+  } catch (error) {
+    console.error("Error fetching Pandit categories:", error);
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
 exports.updatePanditById = [
-  upload, // Add your image upload middleware here
+  upload, // Multer middleware for image upload
   async (req, res) => {
+    console.log(req.body);
+    console.log("Uploaded File:", req.file); // Debugging: Check if file is received
+
     try {
       const { id } = req.params; // Get Pandit ID from request params
       const { password, ...otherDetails } = req.body; // Extract password and other details
 
-      // Check if password is being updated, if so, hash the new password
       let updatedData = { ...otherDetails };
+
+      // Hash new password if updated
       if (password) {
         const saltRounds = 10;
         updatedData.password = await bcrypt.hash(password, saltRounds);
       }
 
-      // Handle image update if any (assuming you are saving the path of the image)
+      // Handle image update if any
       if (req.file) {
-        updatedData.image = req.file.path; // Store new image path
-      }
-      if (req.body.aadhar_image) {
-        updatedData.aadhar_image = req.body.aadhar_image; // Update Aadhar image if provided
+        updatedData.image = req.file.filename; // Store only the filename (string)
       }
 
-      // Find the Pandit by ID and update
+      if (req.body.aadhar_image) {
+        updatedData.aadhar_image = req.body.aadhar_image.toString(); // Ensure string format
+      }
+
+      // Find and update the Pandit
       const updatedPandit = await Pandit.findByIdAndUpdate(id, updatedData, { new: true });
       if (!updatedPandit) {
         return res.status(404).json({ message: 'Pandit not found', status: 0 });
       }
 
-      // Remove the password from the response before sending back
+      // Remove sensitive info before sending response
       const panditResponse = updatedPandit.toObject();
       delete panditResponse.password;
 
       res.status(200).json({ message: 'Pandit updated successfully', status: 1, data: panditResponse });
     } catch (error) {
       res.status(500).json({ message: error.message, status: 0 });
+      console.log(error.message);
     }
-  },
+  }
 ];
+
 
 // Get all Pandits
 exports.getPandits = async (req, res) => {
