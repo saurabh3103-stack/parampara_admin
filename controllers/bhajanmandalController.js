@@ -203,37 +203,43 @@ exports.getBhajansByCategory = async (req, res) => {
     }
 };
 
+
 exports.bhajanLogin = async (req, res) => {
-    const { owner_email, owner_password } = req.body;
+    const { owner_email, owner_password, fcm_tokken } = req.body;
     if (!owner_email || !owner_password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+        return res.status(400).json({ message: "Email and password are required" });
     }
     try {
-        const bhajanMandal = await BhajanMandal.findOne({ 'bhajan_owner.owner_email': owner_email });
-        if (!bhajanMandal) {
-            return res.status(400).json({ message: 'Invalid email or password' });
-        }
-        if (!bhajanMandal.bhajan_owner || !bhajanMandal.bhajan_owner.owner_password) {
-            return res.status(400).json({ message: 'Invalid email or password' });
+        const bhajanMandal = await BhajanMandal.findOne({ "bhajan_owner.owner_email": owner_email });
+        if (!bhajanMandal || !bhajanMandal.bhajan_owner || !bhajanMandal.bhajan_owner.owner_password) {
+            return res.status(400).json({ message: "Invalid email or password" });
         }
         const storedHashedPassword = bhajanMandal.bhajan_owner.owner_password;
-        if (typeof storedHashedPassword !== 'string' || typeof owner_password !== 'string') {
-            return res.status(400).json({ message: 'Invalid password format' });
+        if (typeof storedHashedPassword !== "string" || typeof owner_password !== "string") {
+            return res.status(400).json({ message: "Invalid password format" });
         }
         const isMatch = await bcrypt.compare(owner_password, storedHashedPassword);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+        // Update FCM token if provided
+        if (fcm_tokken) {
+            await BhajanMandal.updateOne(
+                { _id: bhajanMandal._id },
+                { $set: { "bhajan_owner.fcm_tokken": fcm_tokken } }
+            );
         }
         res.json({
-            message: 'Login successful',
+            message: "Login successful",
             user: {
                 email: bhajanMandal.bhajan_owner.owner_email,
-                name: bhajanMandal.bhajan_owner.owner_name, // Adjust according to your DB
-                id: bhajanMandal._id
+                name: bhajanMandal.bhajan_owner.owner_name,
+                id: bhajanMandal._id,
+                fcm_tokken: fcm_tokken || bhajanMandal.bhajan_owner.fcm_tokken
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 

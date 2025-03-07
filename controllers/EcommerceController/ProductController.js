@@ -89,7 +89,6 @@ exports.updateProduct = async (req, res) => {
     if (err) {
       return res.status(400).json({ success: false, message: err.message });
     }
-
     try {
       const { 
         name, 
@@ -152,21 +151,32 @@ exports.getAllProduct = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+    if (!product) return res.status(200).json({ success: false, message: "Product not found" });
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+exports.getProducrBySlug = async(req,res)=>{
+  try{
+    const product = await Product.findOne({slug:req.params.id});
+    if(!product) return res.satatus(200).json({success:false,message:"Product not found"});
+    res.status(200).json({success:true,data:product});
+  }
+  catch (error){
+    res.status(500).json({success:false,message:error.message});
+  }
+}
+
 exports.deleteProduct = async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
     if (!deletedProduct) return res.status(404).json({ success: false, message: "Product not found" });
 
-    res.status(200).json({ success: true, message: "Product deleted successfully" });
+    res.status(200).json({ success: true, status:1, message: "Product deleted successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, status:0, message: error.message });
   }
 };
 
@@ -187,9 +197,7 @@ exports.updateQuantity = async (req, res) => {
   try {
     const { quantity } = req.body;
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, { quantity }, { new: true });
-
     if (!updatedProduct) return res.status(404).json({ success: false, message: "Product not found" });
-
     res.status(200).json({ success: true, message: "Quantity updated successfully", data: updatedProduct });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -216,6 +224,20 @@ exports.updateFeaturedStatus = async (req, res) => {
       message: `Product ${isFeatured ? "marked as Featured" : "removed from Featured"}`,
       data: updatedProduct 
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const products = await Product.find({ category: categoryId });
+
+    if (!products.length) {
+      return res.status(200).json({ success: false, message: "No products found in this category" });
+    }
+    res.status(200).json({ success: true, data: products });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

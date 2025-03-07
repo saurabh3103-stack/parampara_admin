@@ -30,11 +30,23 @@ const upload = multer({ storage });
 
 // Add Story with Sub-Stories
 exports.addStory = async (req, res) => {
+  console.log("Story data"+req.body);
   try {
-    const { title, description, subStories } = req.body;
+    const { title, description } = req.body;
+    let subStories = JSON.parse(req.body.subStories || "[]"); // Parse subStories from string
 
-    if (!title || !description || !subStories || !Array.isArray(subStories)) {
+    if (!title || !description || !Array.isArray(subStories)) {
       return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Process uploaded images
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file, index) => {
+        if (subStories[index]) {
+          subStories[index].images = subStories[index].images || [];
+          subStories[index].images.push(`/uploads/stories/${file.filename}`);
+        }
+      });
     }
 
     const newStory = new Story({ title, description, subStories });
@@ -42,9 +54,12 @@ exports.addStory = async (req, res) => {
 
     res.status(201).json({ message: "Story added successfully!", story: newStory });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Error adding story" });
   }
 };
+
+
 
 // Upload Images for a Sub-Story
 exports.uploadSubStoryImages = [

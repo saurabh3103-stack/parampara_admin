@@ -26,6 +26,7 @@ const bhajanMandalSchema = new mongoose.Schema({
         owner_name: { type: String, required: true },
         owner_email: { type: String, required: true, unique: true },
         owner_phone: { type: String, required: true },
+        fcm_tokken : {type:String,default:null},
         owner_password: { type: String, required: true }
     }
 });

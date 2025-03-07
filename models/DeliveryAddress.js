@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const DeliveryAddressSchema = new mongoose.Schema({
   DeliveryId: { type: String, required: true, unique: true },
   OrderId: { type: String, required: true },
+  userId:{type:String,default:null},
   DeliveryAddress: {
     AddressLine1: { type: String, required: true },
     AddressLine2: { type: String, required: false },

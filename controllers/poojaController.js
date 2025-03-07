@@ -246,6 +246,19 @@ exports.getPoojaById = async (req,res)=>{
   }
 }
 
+exports.getPoojaByCategoryId =async(req,res)=>{
+  try{
+    const {categoryId}= req.params;
+    const poojaDetails = await Pooja.findOne({pooja_category:categoryId});
+    if(!poojaDetails){
+      return res.status(200).json({message:"Pooja Not Found",status:0});
+    }
+    return res.status(200).json({message:"Pooja Details",status:1,data:poojaDetails});
+  }
+  catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}
 exports.getPoojaUserbyID = async (req, res) => {
   try {
     const { id } = req.params;
@@ -289,6 +302,8 @@ exports.getPoojaBookingPandit =async(req,res)=>{
     res.status(500).json({message:error.message,status:0});
   }
 }
+
+
 
 exports.getPoojaBookingUser = async(req,res)=>{
   try{

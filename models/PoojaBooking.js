@@ -14,7 +14,7 @@ const poojaBookingSchema = new mongoose.Schema({
     type: String,
     default: null, // Default to null if no Pandit is assigned
   },
-  poojaDetails: {
+  bookingDetails: {
     poojaId: {
       type: String,
       required: true,

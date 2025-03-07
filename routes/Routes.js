@@ -7,7 +7,7 @@ const { createUser, getUsers,loginUser, getUserByEmail,updateUser ,updateUserSta
 const { createlocation, getlocation } = require('../controllers/locationController');
 const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory, getPoojaCategoryWeb ,deletePoojaCategory, getPoojaCategoryById, updatePoojaCategroy, updatePoojaCategoryStatus} = require('../controllers/poojaCategoryController');
-const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatus, deletePooja, getPoojaById,updatePoojaById,getPoojaBookingPandit,getPoojaBookingUser } = require('../controllers/poojaController');
+const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatus, deletePooja, getPoojaById,updatePoojaById,getPoojaBookingPandit,getPoojaBookingUser,getPoojaByCategoryId } = require('../controllers/poojaController');
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
@@ -17,14 +17,19 @@ const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
 const { createPoojaBooking,createBhanjanMandaliBooking,getBhajanOrder,getOrder,addDeliveryAddress,getDeliveryAddress,
     getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,
-    updateMandaliOrder} = require("../controllers/orderController");
+    updateMandaliOrder,getDeliveryAddressByUSerID,acceptOrRejectMandaliBooking} = require("../controllers/orderController");
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
 const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin} = require("../controllers/bhajanmandalController");
 const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal,getactiveVideosByBhajanMandal } = require('../controllers/bhajanvideoController');
 const { createCategory,getAllCategories,getActiveCategories,getCategoryById,updateCategory,deleteCategory,activeInactive}= require('../controllers/EcommerceController/ProductCategoryController');
-const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus } = require('../controllers/EcommerceController/ProductController');
+const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = require("../controllers/EcommerceController/EcommerceCartController");
+
+const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug } = require('../controllers/EcommerceController/ProductController');
+// const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
+const {createOrder,updateOrder}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
+
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -49,6 +54,7 @@ router.get('/location/', authenticateToken, getlocation);
 router.get('/pooja/all-pooja/', authenticateToken, getPooja);
 router.post('/pooja/create-pooja/', authenticateToken, createPooja);
 router.get('/pooja/all-poojaUser',authenticateToken,getPoojaUser);
+router.get('/pooja/category-id/:categoryId',authenticateToken,getPoojaByCategoryId);
 router.get('/pooja/all-poojaUser/:id',authenticateToken,getPoojaUserbyID);
 router.get('/pooja/pooja/:id',authenticateToken , getPoojaById);
 router.put('/pooja/update-pooja/:id',authenticateToken,updatePoojaById);
@@ -74,6 +80,8 @@ router.get('/order-address',authenticateToken,getAllOrdersWithAddress);
 router.get("/orders/user/:userId",authenticateToken, getPoojaOrdersByUserId);
 router.post("/orders/acceptReject",authenticateToken,acceptRejectBooking);
 router.get("/user/get-booking-user/:userId",authenticateToken,getPoojaBookingUser);
+router.get("/user/delivery-address/:userId",authenticateToken,getDeliveryAddressByUSerID);
+
 // End Pooja Routes
 
 router.post('/slider/create-category/',authenticateToken,createSliderCategory);
@@ -106,7 +114,7 @@ router.post("/otp/send-otp", authenticateToken ,sendOtp);
 router.post("/otp/verify-otp", authenticateToken,verifyOtp);
 router.post("/cart/addCart",authenticateToken,addToCart);
 router.get("/cart/get-cart/:id",authenticateToken,getCartItems);
-router.delete("/cart/remove/:cart_id",authenticateToken,removeCartItem);
+router.delete("/cart/remove/:product_id/:user_id",authenticateToken,removeCartItem);
 router.delete("/cart/clear/:user_id", authenticateToken,removeAllCartItems);
 router.post("/transcation/create-transcation",authenticateToken,createTransaction);
 
@@ -138,6 +146,7 @@ router.get('/bhajanMandal/get-active-video/:bhajan_mandal_id',authenticateToken,
 router.post('/order/bhajan-mandali',authenticateToken,createBhanjanMandaliBooking);
 router.get('/order/bhajan-mandli/:orderId',authenticateToken,getBhajanOrder);
 router.put('/order/update-mandali-order',authenticateToken,updateMandaliOrder);
+router.put('/order/accept-reject-mandali',authenticateToken,acceptOrRejectMandaliBooking);
 // Bhajan Mandal Routes end
 // Ecommerce Section 
 router.post("/product/category",authenticateToken,createCategory);
@@ -155,8 +164,26 @@ router.get("/product/get-product/:id",authenticateToken,getProductById);
 router.delete("/product/delete/:id",authenticateToken,deleteProduct);
 router.patch("/product/update-status/:id",authenticateToken,updateStatus);
 router.put("/product/update-quantity/:id",authenticateToken,updateQuantity);
-router.put("/product/:id/featured",authenticateToken,updateFeaturedStatus)
+router.put("/product/:id/featured",authenticateToken,updateFeaturedStatus);
+router.get("/product/category-id/:categoryId",authenticateToken,getProductsByCategory);
+router.get("/product/product-details/:id",authenticateToken,getProducrBySlug);
+router.post("/product/add-cart", authenticateToken,ecomaddToCart);
+router.get("/product/cart/:user_id",authenticateToken,ecomgetCart);
+router.delete("/product/cart/:user_id/:product_id", ecomremoveCartItem);
+router.delete("/product/cart/clear/:user_id", ecomclearCart);
+router.post("/e-store/create-order",authenticateToken,createOrder);
+router.put("/e-store/update-order/:orderId",authenticateToken,updateOrder);
 // Ecommerce Section 
+
+// // Ecommerce Review
+// router.post("/product/reviews", authenticateToken.createReview);
+// router.put("/product/reviews/:reviewId", authenticateToken.updateReview);
+// router.delete("/product/reviews/:reviewId", authenticateToken.deleteReview);
+// router.patch("/product/reviews/:reviewId/hide", authenticateToken.hideReview);
+// router.get("/product/reviews", authenticateToken.getAllReviews);
+
+// Ecommerce Review 
+
 
 // Story Section 
 router.post("/story/add",authenticateToken,addStory);

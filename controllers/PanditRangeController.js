@@ -1,6 +1,7 @@
 const Pandit = require('../models/panditModel');
 
 exports.getPanditsInRange = async (req, res) => {
+  console.log(req.body);
   try {
     const { userLat, userLon } = req.body;
     if (!userLat || !userLon) {
@@ -24,10 +25,11 @@ exports.getPanditsInRange = async (req, res) => {
     const pandits = await Pandit.find({});
     const nearbyPandits = pandits.filter(pandit => {
       const distance = calculateDistance(userLat, userLon, pandit.latitude, pandit.longitude);
+      console.log(distance);
       // console.log(`Distance to Pandit (${pandit.name || 'unknown'}): ${distance} km`);
-      return distance <= 2;
+      return distance <= 50000;
     });
-
+    console.log(nearbyPandits);
     if (nearbyPandits.length === 0) {
       return res.status(200).json({ message: 'No nearby Pandits found.', data: 0, status: 0 });
     }
