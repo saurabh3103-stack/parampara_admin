@@ -32,7 +32,7 @@ exports.ecomaddToCart = async (req, res) => {
         productType
       });
       await cartItem.save();
-      return res.status(201).json({ success: true, message: "Product added to cart", cartItem });
+      return res.status(200).json({ success: true, message: "Product added to cart", cartItem });
     }
   } catch (error) {
     console.error("Error adding to cart:", error.message);

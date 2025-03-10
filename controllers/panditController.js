@@ -3,12 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const Pandit = require('../models/panditModel');
-const PanditCategory = require('../models/panditCategoryModel');
+
+// Multer configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads/panditImages'); 
+    const uploadPath = path.join(__dirname, '../public/uploads/panditImages');
     if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true }); 
+      fs.mkdirSync(uploadPath, { recursive: true });
     }
     cb(null, uploadPath);
   },
@@ -30,7 +31,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, 
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 }).fields([
   { name: 'image', maxCount: 1 },
   { name: 'aadhar_image', maxCount: 1 },
@@ -111,27 +112,24 @@ exports.updatePanditById = [
   upload, // Multer middleware for image upload
   async (req, res) => {
     console.log(req.body);
-    console.log("Uploaded File:", req.file); // Debugging: Check if file is received
+    console.log("Uploaded File:", req.files); // Debugging: Check if files are received
 
     try {
       const { id } = req.params; // Get Pandit ID from request params
       const { password, ...otherDetails } = req.body; // Extract password and other details
-
       let updatedData = { ...otherDetails };
-
       // Hash new password if updated
       if (password) {
         const saltRounds = 10;
         updatedData.password = await bcrypt.hash(password, saltRounds);
       }
-
       // Handle image update if any
-      if (req.file) {
-        updatedData.image = req.file.filename; // Store only the filename (string)
+      if (req.files?.image) {
+        updatedData.image = req.files.image[0].filename; // Store only the filename (string)
       }
 
-      if (req.body.aadhar_image) {
-        updatedData.aadhar_image = req.body.aadhar_image.toString(); // Ensure string format
+      if (req.files?.aadhar_image) {
+        updatedData.aadhar_image = req.files.aadhar_image[0].filename; // Store only the filename (string)
       }
 
       // Find and update the Pandit
@@ -151,7 +149,6 @@ exports.updatePanditById = [
     }
   }
 ];
-
 
 // Get all Pandits
 exports.getPandits = async (req, res) => {

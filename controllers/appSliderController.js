@@ -1,13 +1,29 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const cloudinary = require('../cloudinaryConfig'); 
+const fs = require('fs');
 const Slider = require('../models/appSliderModel');
 
-const storage = multer.memoryStorage(); 
+// Ensure the upload directory exists
+const uploadDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure Multer for local storage
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, 
+    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB limit
 });
 
 exports.createSlider = [
@@ -17,29 +33,18 @@ exports.createSlider = [
             if (!req.file) {
                 return res.status(400).json({ message: 'No file uploaded', status: 0 });
             }
-            const result = await cloudinary.uploader.upload_stream(
-                { resource_type: 'auto' }, 
-                (error, result) => {
-                    if (error) {
-                        return res.status(500).json({ message: 'Error uploading to Cloudinary', error: error.message });
-                    }
-                    const addSlider = new Slider({
-                        name: req.body.name,
-                        category: req.body.category,
-                        image: result.secure_url, 
-                        status: req.body.status || 'active',
-                        updated_at: Date.now(),
-                    });
-                    addSlider.save()
-                        .then(() => {
-                            res.status(200).json({ message: 'Slider Created', status: 1, image: result.secure_url });
-                        })
-                        .catch(error => {
-                            res.status(500).json({ message: error.message, status: 0 });
-                        });
-                }
-            );
-            result.end(req.file.buffer); 
+            const filePath = `/uploads/${req.file.filename}`;
+            const addSlider = new Slider({
+                name: req.body.name,
+                category: req.body.category,
+                image: filePath,
+                status: req.body.status || 'active',
+                updated_at: Date.now(),
+            });
+
+            await addSlider.save();
+            res.status(200).json({ message: 'Slider Created', status: 1, image: filePath });
+
         } catch (error) {
             console.error('Error creating slider:', error);
             res.status(500).json({ message: error.message, status: 0 });
@@ -47,6 +52,45 @@ exports.createSlider = [
     }
 ];
 
+exports.updateSlider = [
+    upload.single('image'),
+    async (req, res) => {
+        try {
+            const sliderId = req.params.id;
+            if (!sliderId) {
+                return res.status(400).json({ message: 'Slider ID is required.', status: 0 });
+            }
+
+            const slider = await Slider.findById(sliderId);
+            if (!slider) {
+                return res.status(404).json({ message: 'Slider not found.', status: 0 });
+            }
+
+            const updateData = {
+                name: req.body.name || slider.name,
+                category: req.body.category || slider.category,
+                status: req.body.status || slider.status,
+                updated_at: Date.now(),
+            };
+
+            if (req.file) {
+                const filePath = `/uploads/${req.file.filename}`;
+                updateData.image = filePath;
+            }
+
+            const updatedSlider = await Slider.findByIdAndUpdate(sliderId, updateData, { new: true });
+            res.status(200).json({
+                message: 'Slider updated successfully',
+                status: 1,
+                data: updatedSlider,
+            });
+
+        } catch (error) {
+            console.error('Error updating slider:', error);
+            res.status(500).json({ message: 'Error updating slider: ' + error.message, status: 0 });
+        }
+    }
+];
 
 exports.getSlider = async (req, res) => {
     try {
@@ -113,47 +157,7 @@ exports.getSliderById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching slider: ' + error.message, status: 0 });
   }
 };
-exports.updateSlider = [
-    upload.single('image'),
-    async (req, res) => {
-      try {
-        const sliderId = req.params.id;
-        if (!sliderId) {
-          return res.status(400).json({ message: 'Slider ID is required.', status: 0 });
-        }
-        const slider = await Slider.findById(sliderId);
-        if (!slider) {
-          return res.status(404).json({ message: 'Slider not found.', status: 0 });
-        }
-        const updateData = {
-          name: req.body.name || slider.name,
-          category: req.body.category || slider.category,
-          status: req.body.status || slider.status,
-          updated_at: Date.now(),
-        };
-        if (req.file) {
-          const cloudinaryResult = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-              { resource_type: 'auto' },
-              (error, result) => {
-                if (error) return reject(error);
-                resolve(result);
-              }
-            ).end(req.file.buffer);
-          });
-          updateData.image = cloudinaryResult.secure_url; 
-        }
-        const updatedSlider = await Slider.findByIdAndUpdate(sliderId, updateData, { new: true });
-        res.status(200).json({
-          message: 'Slider updated successfully',
-          status: 1,
-          data: updatedSlider,
-        });
-      } catch (error) {
-        console.error('Error updating slider:', error);
-        res.status(500).json({ message: 'Error updating slider: ' + error.message, status: 0 });
-      }
-    },];
+
   
 exports.updateSliderStatus = async (req, res) => {
   try {

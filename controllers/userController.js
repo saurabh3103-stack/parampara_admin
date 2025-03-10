@@ -76,7 +76,7 @@ exports.getUsers = async (req, res) => {
 };
 exports.loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, fcm_token } = req.body; // Accept fcm_token from request body
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required", status: 0 });
     }
@@ -90,16 +90,21 @@ exports.loginUser = async (req, res) => {
     if (!match) {
       return res.status(401).json({ message: "Incorrect password", status: 0 });
     }
-
+    // Update FCM token in database
+    if (fcm_token) {
+      user.fcm_tokken = fcm_token;
+      await user.save();
+    }
     res.status(200).json({
       message: "Login successful",
       status: 1,
-      data: { id: user._id, username: user.username, email: user.email,user_data:user }
+      data: { id: user._id, username: user.username, email: user.email, fcm_token: user.fcm_token }
     });
   } catch (error) {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+
 exports.getUserByEmail = async (req, res) => {
   try {
     const { email } = req.body;

@@ -95,14 +95,12 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // Distance in km
 };
 
-// Assign a Pandit and keep trying until one accepts the booking
 // Refactored assignPandit returns a result object
-const assignPandit = async (poojaBooking, userLat, userLong, index = 0) => {
+const assignPandit = async (poojaBooking, userLat, userLong, index) => {
   let pandits = await pandit.find();
   if (!pandits.length) {
     return { status: 404, message: "No available Pandits", accepted: false };
   }
-
   // Sort Pandits by distance (nearest first)
   pandits = pandits
     .map((pandit) => ({
@@ -110,16 +108,19 @@ const assignPandit = async (poojaBooking, userLat, userLong, index = 0) => {
       distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude),
     }))
     .sort((a, b) => a.distance - b.distance);
+    console.log(pandits.length);
 
   if (index >= pandits.length) {
+    console.log('Wait from admin approval');
     return { status: 200, message: "No Pandit accepted the booking.", accepted: false };
   }
-
+  console.log(index);
   const currentPandit = pandits[index];
-  console.log(currentPandit);
-  console.log(`📩 Sending request to Pandit  (Distance:  km)`);
-
-  // Send Notification to Pandit
+  if (!currentPandit.fcm_tokken) {
+    console.log(`⚠️ Pandit ${currentPandit.name} has no FCM token. Skipping...`);
+    return assignPandit(poojaBooking, userLat, userLong, index+1);
+  }
+  console.log(`📩 Sending request to Pandit ${currentPandit.name} (Distance: ${currentPandit.distance} km)`);
   const notificationSent = await sendNotificationToPandit(currentPandit.fcm_tokken, poojaBooking);
   if (notificationSent) {
     console.log(`⏳ Waiting for response from Pandit ${currentPandit.name}...`);
@@ -130,23 +131,6 @@ const assignPandit = async (poojaBooking, userLat, userLong, index = 0) => {
   }
 };
 
-// Main controller function
-const assignPanditHandler = async (req, res) => {
-  try {
-    const result = await assignPandit(poojaBooking, userLat, userLong);
-    // Ensure only one response is sent here
-    if (!res.headersSent) {
-      res.status(result.status).json(result);
-    }
-  } catch (error) {
-    console.error("❌ Error assigning Pandit:", error.message);
-    if (!res.headersSent) {
-      res.status(500).json({ message: "Error assigning Pandit", error: error.message, status: 0 });
-    }
-  }
-};
-
-
 // Send notification to Pandit
 const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
   if (!fcmToken) {
@@ -156,10 +140,6 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
 
   const message = {
     token: fcmToken,
-    // notification: {
-    //   title: "New Pooja Booking",
-    //   body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
-    // },
     data: {
       title: "New Pooja Booking",
       body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
@@ -167,7 +147,6 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
       booking_type: 'panditBooking',
       activity_to_open: "com.deificdigital.paramparapartners.activities.HomeActivity",
       extra_data: "Some additional data",
-      // click_action: "OPEN_ACTIVITY",
     },
     android: {
       priority: "high"
@@ -188,16 +167,13 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
 const acceptRejectBooking = async (req, res) => {
   try {
     const { panditId, bookingId, status, userLat, userLong } = req.body;
-
     if (!panditId || !bookingId || status === undefined) {
       return res.status(400).json({ message: "Missing required fields", status: 0 });
     }
-
     const poojaBooking = await PoojaBooking.findOne({ bookingId });
     if (!poojaBooking) {
       return res.status(404).json({ message: "Pooja booking not found", status: 0 });
     }
-
     if (status === 1) {
       // Pandit accepted
       poojaBooking.panditId = panditId;
@@ -207,11 +183,10 @@ const acceptRejectBooking = async (req, res) => {
       if (user && user.fcm_tokken) {
         await sendNotificationToUser(user.fcm_tokken, bookingId);
       }
-
       return res.status(200).json({ message: "Booking accepted.", status: 1 });
     } else {
       // Pandit rejected, assign next Pandit
-      assignPandit(poojaBooking, userLat, userLong, res, req.body.index + 1);
+      assignPandit(poojaBooking, userLat, userLong, req.body.index + 1);
       return res.status(200).json({ message: "Booking Send New Pandit.", status: 1 });
     }
   } catch (error) {
@@ -237,13 +212,15 @@ const updatePoojaBooking = async (req, res) => {
     poojaBooking.transactionDetails = { transactionId, transactionStatus, transactionDate };
     await poojaBooking.save();
     // Start finding an available Pandit
-    assignPandit(poojaBooking, userLat, userLong, res);
+    assignPandit(poojaBooking, userLat, userLong, 0);
     res.status(200).json({message: "Booking Confirm", status: 1})
   } catch (error) {
     console.error("❌ Error updating Pooja booking:", error.message);
     res.status(500).json({ message: "Error updating Pooja booking", error: error.message, status: 0 });
   }
 };
+
+
 
 const sendNotificationToBhajanMandali = async (fcmToken, mandaliBooking) => {
   if (!fcmToken) {
@@ -399,7 +376,8 @@ const addDeliveryAddress = async (req, res) => {
     try {
       // Destructuring the input from request body
       const { OrderId, userId, DeliveryAddress: AddressDetails } = req.body;
-      if (!OrderId || !userId || !AddressDetails || !AddressDetails.AddressLine1 || !AddressDetails.Location || !AddressDetails.Latitude || !AddressDetails.Longitude || !AddressDetails.City || !AddressDetails.State || !AddressDetails.PostalCode || !AddressDetails.Country) {
+      console.log("Delivery Address:", JSON.stringify(req.body, null, 2));
+      if (!OrderId  || !AddressDetails || !AddressDetails.AddressLine1 || !AddressDetails.Location || !AddressDetails.City || !AddressDetails.State || !AddressDetails.PostalCode || !AddressDetails.Country) {
         return res.status(400).json({ message: "Missing required fields in the delivery address" });
       }
 
@@ -432,7 +410,7 @@ const getDeliveryAddress = async (req, res) => {
     const { orderId } = req.params;
     const delivery = await DeliveryAddress.findOne({ OrderId: orderId });
     if (!delivery) {
-      return res.status(404).json({ message: "Delivery address not found" });
+      return res.status(200).json({ message: "Delivery address not found" });
     }
     res.json(delivery);
   } catch (error) {

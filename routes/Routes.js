@@ -27,7 +27,7 @@ const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = requir
 
 const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug } = require('../controllers/EcommerceController/ProductController');
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
-const {createOrder,updateOrder}= require("../controllers/EcommerceController/EcommerceOrderController");
+const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
 
 // Define other routes (existing ones)
@@ -172,7 +172,9 @@ router.get("/product/cart/:user_id",authenticateToken,ecomgetCart);
 router.delete("/product/cart/:user_id/:product_id", ecomremoveCartItem);
 router.delete("/product/cart/clear/:user_id", ecomclearCart);
 router.post("/e-store/create-order",authenticateToken,createOrder);
-router.put("/e-store/update-order/:orderId",authenticateToken,updateOrder);
+router.put("/e-store/update-order/:combinedPaymentId",authenticateToken,updateOrderPayment);
+router.get("/e-store/orders/:orderId",authenticateToken,geteStoreOrder);
+router.get("/e-store/all-order",authenticateToken,geteStoreAllOrder);
 // Ecommerce Section 
 
 // // Ecommerce Review
