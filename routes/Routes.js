@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { signin, authenticateToken } = require('../middlewares/authMiddleware');  // Import the functions
 
-const { createUser, getUsers,loginUser, getUserByEmail,updateUser ,updateUserStatus,forgetpassword,verifyOtpUser,resetPassword } = require('../controllers/userController');
+const { createUser, getUsers,loginUser, getUserByEmail,updateUser ,updateUserStatus,forgetpassword,verifyOtpUser,resetPassword,getUserById } = require('../controllers/userController');
 const { createlocation, getlocation } = require('../controllers/locationController');
 const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory, getPoojaCategoryWeb ,deletePoojaCategory, getPoojaCategoryById, updatePoojaCategroy, updatePoojaCategoryStatus} = require('../controllers/poojaCategoryController');
@@ -25,9 +25,9 @@ const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal,getactiveVideosBy
 const { createCategory,getAllCategories,getActiveCategories,getCategoryById,updateCategory,deleteCategory,activeInactive}= require('../controllers/EcommerceController/ProductCategoryController');
 const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = require("../controllers/EcommerceController/EcommerceCartController");
 
-const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug } = require('../controllers/EcommerceController/ProductController');
+const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug,featuredProduct,offeredproduct } = require('../controllers/EcommerceController/ProductController');
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
-const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder}= require("../controllers/EcommerceController/EcommerceOrderController");
+const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
 
 // Define other routes (existing ones)
@@ -156,7 +156,8 @@ router.get("/product/category/:id",authenticateToken,getCategoryById);
 router.put("/product/update-category/:id",authenticateToken,updateCategory);
 router.delete("/product/delete-category/:id",authenticateToken,deleteCategory);
 router.patch("/product/category/update-status/:id",authenticateToken,activeInactive); 
-
+router.get("/product/featured-product",authenticateToken,featuredProduct);
+router.get("/product/offered-product/:offerType",authenticateToken,offeredproduct);
 router.post("/product/add-product",authenticateToken,addProduct);
 router.put("/product/update-product/:id",authenticateToken,addProduct);
 router.get("/product/get-all",authenticateToken,getAllProduct);
@@ -175,6 +176,11 @@ router.post("/e-store/create-order",authenticateToken,createOrder);
 router.put("/e-store/update-order/:combinedPaymentId",authenticateToken,updateOrderPayment);
 router.get("/e-store/orders/:orderId",authenticateToken,geteStoreOrder);
 router.get("/e-store/all-order",authenticateToken,geteStoreAllOrder);
+router.get("/e-stroe/user-order/:userId",authenticateToken,getAllOrderUserId);
+router.put("/e-store/update-order-status/:orderId",authenticateToken,updateOrderStatus);
+router.put("/e-store/update-multiple-order-status",authenticateToken,updateMultipleOrderStatuses);
+router.get("/user/:id",authenticateToken,getUserById);
+
 // Ecommerce Section 
 
 // // Ecommerce Review

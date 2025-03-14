@@ -59,7 +59,7 @@ exports.updateOrderPayment = async (req, res) => {
     const updatedOrders = await eCommerceOrder.updateMany(
       { combinedPaymentId },
       {
-        orderStatus: transactionStatus === "completed" ? 1 : 0, // 1: Confirmed, 0: Pending
+        orderStatus: "pending", 
         "paymentDetails.transactionId": transactionId,
         "paymentDetails.transactionStatus": transactionStatus,
         "paymentDetails.transactionDate": transactionDate || new Date(),
@@ -98,9 +98,83 @@ exports.geteStoreAllOrder = async (req,res) =>{
     if(!order){
       return res.status(200).json({message:"Order Not Found"});
     }
-    return res.status(200).json({orderDara:order,message:"Data found"});
+    return res.status(200).json({orderData:order,message:"Data found"});
   }
   catch (error){
     res.status(500).json({message:"Error in fetching data",error:error.message});
   }
 }
+
+exports.getAllOrderUserId = async (req,res)=>{
+  try{
+    const {userId} = req.params;
+    let order = await eCommerceOrder.find({'userDetails.userId':userId});
+    if(!order){
+      return res.status(200).json({message:"No Order Found",status:1});
+    }
+    return res.status(200).json({orderData:order,message:"Order Found",status:1});
+  }catch(error){
+    res.status(500).json({message:"Error in fetching data",error:error.message});
+  }
+}
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { orderId } = req.params; // Extract orderId from request parameters
+    const { orderStatus } = req.body; // Extract the new order status
+    const validStatuses = ["pending", "shipped", "delivered", "cancelled"];
+    if (!orderStatus || !validStatuses.includes(orderStatus.toLowerCase())) {
+      return res.status(400).json({ message: "Invalid order status", status: 0 });
+    }
+    let order = await eCommerceOrder.findOne({ orderId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found", status: 0 });
+    }
+    order.orderStatus = orderStatus.toLowerCase();
+    await order.save();
+    res.status(200).json({ message: "Order status updated successfully", orderStatus: order.orderStatus, status: 1 });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Error updating order status", error: error.message, status: 0 });
+  }
+};
+
+exports.updateMultipleOrderStatuses = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { orders } = req.body; // Expecting an array of order updates
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({ message: "Invalid orders array", status: 0 });
+    }
+
+    const validStatuses = ["pending", "shipped", "delivered", "cancelled"];
+    const bulkUpdateOps = [];
+
+    for (const order of orders) {
+      const { orderId, orderStatus } = order;
+
+      if (!orderId || !orderStatus || !validStatuses.includes(orderStatus.toLowerCase())) {
+        return res.status(400).json({ message: `Invalid data for order: ${orderId}`, status: 0 });
+      }
+
+      bulkUpdateOps.push({
+        updateOne: {
+          filter: { orderId },
+          update: { $set: { orderStatus: orderStatus.toLowerCase() } },
+        },
+      });
+    }
+
+    if (bulkUpdateOps.length > 0) {
+      const result = await eCommerceOrder.bulkWrite(bulkUpdateOps);
+      return res.status(200).json({ message: "Order statuses updated successfully", result, status: 1 });
+    }
+
+    return res.status(400).json({ message: "No valid updates found", status: 0 });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Error updating orders", error: error.message, status: 0 });
+  }
+};

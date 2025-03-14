@@ -124,6 +124,28 @@ exports.getUserByEmail = async (req, res) => {
   }
 };
 
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params; // Fetch ID from request parameters
+    if (!id) {
+      return res.status(400).json({ message: "User ID is required", status: 0 });
+    }
+
+    const user = await User.findById(id); // Find user by ID
+    if (!user) {
+      return res.status(404).json({ message: "User not found", status: 0 });
+    }
+
+    const userResponse = user.toObject();
+    delete userResponse.password; // Remove sensitive information
+
+    res.status(200).json({ message: "User found", status: 1, data: userResponse });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 0 });
+  }
+};
+
+
 exports.updateUser = [
   upload,
   async (req, res) => {

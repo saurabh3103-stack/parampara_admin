@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const Pandit = require('../models/panditModel');
-
+const PanditCategory = require('../models/panditCategoryModel');
 // Multer configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -20,8 +20,20 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-  if (allowedTypes.includes(file.mimetype)) {
+  console.log("Received file type:", file.mimetype); // Debugging
+
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    'image/bmp',
+    'image/tiff',
+    'image/x-icon'
+  ];
+    if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type'), false);
@@ -30,7 +42,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage: storage,
-  fileFilter: fileFilter,
+  // fileFilter: fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 }).fields([
   { name: 'image', maxCount: 1 },
@@ -43,10 +55,15 @@ exports.createPandit = [
     try {
       const { password, ...otherDetails } = req.body;
 
+      // Check if files are uploaded and assign correct paths
+      let imagePath = req.files?.image ? req.files.image[0].path.replace(/\\/g, "/") : null;
+      let aadharImagePath = req.files?.aadhar_image ? req.files.aadhar_image[0].path.replace(/\\/g, "/") : null;
+
+      // Hash the password
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
-      let imagePath = null;
-      let aadharImagePath = null;
+
+      // Create Pandit instance
       const newPandit = new Pandit({
         ...otherDetails,
         password: hashedPassword,
@@ -54,14 +71,17 @@ exports.createPandit = [
         aadhar_image: aadharImagePath,
       });
       await newPandit.save();
+      // Prepare response without password
       const panditResponse = newPandit.toObject();
       delete panditResponse.password;
-      res.status(200).json({ message: 'Pandit added', status: 1,data:panditResponse });
+
+      res.status(200).json({ message: 'Pandit added', status: 1, data: panditResponse });
     } catch (error) {
       res.status(500).json({ message: error.message, status: 0 });
     }
   },
 ];
+
 
 exports.createPanditCategory = async(req,res) =>{
   try{

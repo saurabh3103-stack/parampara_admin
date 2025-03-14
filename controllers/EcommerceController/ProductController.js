@@ -242,3 +242,27 @@ exports.getProductsByCategory = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.featuredProduct = async (req,res) =>{
+  try{
+    const product = await Product.find({"isFeatured":true});
+    if(!product) return res.satatus(200).json({success:false,message:"Product not found"});
+    res.status(200).json({success:true,data:product});
+  }
+  catch (error){
+    res.status(500).json({success:false,message:error.message});
+  }
+}
+
+exports.offeredproduct = async (req,res)=>{
+  try{
+    const { offerType } = req.params;
+    const  offerPrdoduct = await Product.find({"offer":offerType});
+    if(!offerPrdoduct){
+      return res.status(200).json({success:false,message:"Product not found"});
+    }
+    return res.status(200).json({success:true,data:offerPrdoduct});
+  }catch(error){
+    res.status(500).json({success:false,message:error.message});
+  }
+}

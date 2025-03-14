@@ -5,6 +5,8 @@ const admin = require("../config/firebase");
 const pandit = require("../models/panditModel");
 const User = require("../models/userModel");
 const MandaliBooking = require("../models/BhajanMandalBooking");
+const PanditCategory = require('../models/panditCategoryModel');
+
 const generateNumericUUID = () => {
   const uuid = uuidv4().replace(/-/g, ''); // Remove hyphens
   const numericId = uuid.split('')
@@ -94,42 +96,34 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in km
 };
-
-// Refactored assignPandit returns a result object
+// Assign Pandit 
 const assignPandit = async (poojaBooking, userLat, userLong, index) => {
-  let pandits = await pandit.find();
-  if (!pandits.length) {
-    return { status: 404, message: "No available Pandits", accepted: false };
-  }
-  // Sort Pandits by distance (nearest first)
-  pandits = pandits
-    .map((pandit) => ({
-      ...pandit._doc,
-      distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude),
-    }))
-    .sort((a, b) => a.distance - b.distance);
-    console.log(pandits.length);
-
-  if (index >= pandits.length) {
-    console.log('Wait from admin approval');
-    return { status: 200, message: "No Pandit accepted the booking.", accepted: false };
-  }
-  console.log(index);
-  const currentPandit = pandits[index];
-  if (!currentPandit.fcm_tokken) {
-    console.log(`⚠️ Pandit ${currentPandit.name} has no FCM token. Skipping...`);
-    return assignPandit(poojaBooking, userLat, userLong, index+1);
-  }
-  console.log(`📩 Sending request to Pandit ${currentPandit.name} (Distance: ${currentPandit.distance} km)`);
-  const notificationSent = await sendNotificationToPandit(currentPandit.fcm_tokken, poojaBooking);
-  if (notificationSent) {
-    console.log(`⏳ Waiting for response from Pandit ${currentPandit.name}...`);
-    return { status: 200, message: `Notification sent to ${currentPandit.name}. Waiting for response...`, accepted: true };
-  } else {
-    console.log(`❌ Failed to send notification to Pandit ${currentPandit.name}, trying next one.`);
-    return assignPandit(poojaBooking, userLat, userLong, index + 1);
+  try {
+    const poojaId = poojaBooking.bookingDetails.poojaId;
+    let panditCategories = await PanditCategory.find({ pooja_id: poojaId });
+    if (!panditCategories.length) {
+      return { status: 404, message: "No Pandit category found for this pooja.", accepted: false };
+    }
+    let panditIds = panditCategories.map(category => category.pandit_id);
+    let matchedPandits = await pandit.find({ _id: { $in: panditIds },'profile_status':'active'});
+    if (!matchedPandits.length) {
+      console.log('Wait for admin approval');
+      return { status: 404, message: "No matching Pandits found", accepted: false };
+    }
+    matchedPandits = matchedPandits.map(pandit => ({...pandit.toObject(),
+        distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude)})).sort((a, b) => a.distance - b.distance);
+    console.log("Sorted Pandits by distance:", matchedPandits[index]);
+    if (index >= matchedPandits.length) {
+      console.log('Wait for admin approval');
+      return { status: 200, message: "No Pandit accepted the booking.", accepted: false };
+    }
+    return { status: 200, message: "Pandits assigned", accepted: true, data: matchedPandits };
+  } catch (error) {
+    console.error("Error in assignPandit:", error);
+    return { status: 500, message: "Internal Server Error", accepted: false };
   }
 };
+
 
 // Send notification to Pandit
 const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
@@ -137,15 +131,19 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
     console.log("❌ No FCM token available for this Pandit.");
     return false;
   }
-
-  const message = {
+  const currentISTTime = new Date(new Date().getTime() + (330 - 1) * 60 * 1000) // Adjust for IST (UTC+5:30) and subtract 2 minutes
+  .toISOString()
+  .replace("T", " ")
+  .split(".")[0];
+    const message = {
     token: fcmToken,
     data: {
       title: "New Pooja Booking",
       body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
       booking_id: poojaBooking.bookingId.toString(),
       booking_type: 'panditBooking',
-      activity_to_open: "com.deificdigital.paramparapartners.activities.HomeActivity",
+      booking_time:poojaBooking.schedule.date+"&nbsp"+poojaBooking.schedule.time,
+      sent_time:currentISTTime,
       extra_data: "Some additional data",
     },
     android: {
@@ -155,6 +153,8 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking) => {
 
   try {
     await admin.messaging().send(message);
+    console.log("Current time "+currentISTTime);
+
     console.log(`📩 Notification sent to Pandit with token: ${fcmToken}`);
     return true;
   } catch (error) {
@@ -177,9 +177,9 @@ const acceptRejectBooking = async (req, res) => {
     if (status === 1) {
       // Pandit accepted
       poojaBooking.panditId = panditId;
-      poojaBooking.bookingStatus = 2; // Confirmed
+      poojaBooking.bookingStatus = 2; 
       await poojaBooking.save();
-      const user = await User.findOne({bookingId: poojaBooking.userId});
+      const user = await User.findOne({_id: poojaBooking.userDetails.userId});
       if (user && user.fcm_tokken) {
         await sendNotificationToUser(user.fcm_tokken, bookingId);
       }
@@ -200,8 +200,7 @@ const updatePoojaBooking = async (req, res) => {
   console.log(req.body);
   try {
     const { bookingId, transactionId, transactionStatus, transactionDate, userLat, userLong } = req.body;
-
-    if (!bookingId || !transactionId || !transactionStatus || !transactionDate || !userLat || !userLong) {
+    if (!bookingId || !transactionId || !transactionStatus  || !userLat || !userLong) {
       return res.status(400).json({ message: "Missing required fields", status: 0 });
     }
     const poojaBooking = await PoojaBooking.findOne({ bookingId });
@@ -272,6 +271,7 @@ const updateMandaliOrder = async (req, res) => {
       },
       { new: true } // Return the updated document
     );
+
     if (!updatedMandaliBooking) {
       return res.status(404).json({ message: "Bhajan Mandali booking not found", status: 0 });
     }

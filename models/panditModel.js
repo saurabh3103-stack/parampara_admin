@@ -34,6 +34,7 @@ const panditSchema = new mongoose.Schema({
   type: { type: String },
   register_id: { type: String },
   booking_status: { type: String },
+  profile_status:{type:String,default:"inactive"},
   status: { type: String, default: 'active' },
   otp: { type: String, default: null },
   otpExpire: { type: Date, default : null },

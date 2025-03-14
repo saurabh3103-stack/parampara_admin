@@ -1,23 +1,42 @@
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
-const cloudinary = require('cloudinary').v2;  
 const sliderCategory = require('../models/appSliderCategoryModel');
 
-const storage = multer.memoryStorage();
+const uploadDir = path.join(__dirname, '../public/uploads'); // Define the folder path
+
+// Ensure the uploads directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true }); // Create folder if not exists
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Check and create folder dynamically
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir); // Set destination folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
   if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);  
+    cb(null, true);
   } else {
-    cb(new Error('Invalid file type'), false); 
+    cb(new Error('Invalid file type'), false);
   }
 };
 
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },  
-}).single('image');  
+  limits: { fileSize: 5 * 1024 * 1024 }
+}).single('image');
 
 exports.createSliderCategory = [
   upload,
@@ -26,27 +45,22 @@ exports.createSliderCategory = [
       if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded', status: 0 });
       }
-      cloudinary.uploader.upload_stream(
-        { resource_type: 'auto' }, 
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ message: 'Error uploading to Cloudinary', error: error.message });
-          }
-          const newSliderCategory = new sliderCategory({
-            name: req.body.name,
-            image: result.secure_url,  
-            status: req.body.status || 'active',  
-            updated_at: Date.now(),
-          });
-          await newSliderCategory.save();
-          res.status(200).json({ message: 'Slider Category Added', status: 1 });
-        }
-      ).end(req.file.buffer); 
+
+      const newSliderCategory = new sliderCategory({
+        name: req.body.name,
+        image: path.join('uploads', req.file.filename), // Save local file path
+        status: req.body.status || 'active',
+        updated_at: Date.now(),
+      });
+
+      await newSliderCategory.save();
+      res.status(200).json({ message: 'Slider Category Added', status: 1 });
     } catch (error) {
       res.status(500).json({ message: 'Error creating slider: ' + error.message, status: 0 });
     }
   }
 ];
+
 
 exports.getSliderCategory = async (req, res) => {
   try {

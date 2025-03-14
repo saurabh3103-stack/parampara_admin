@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const ecommerceOrderSchema = new mongoose.Schema({
   orderId: { type: String, required: true, unique: true },
-  orderStatus: { type: Number, default: 0 }, // 0: Pending, 1: Confirmed
+  orderStatus: { type: String, default: 0 }, // 0: Pending, 1: Confirmed
   combinedPaymentId: { type: String, required: true }, // Shared payment ID for multiple orders
 
   orderDetails: [
