@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 
 // ✅ File Filter
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
+  const allowedTypes = /jpeg|jpg|png|webp|gif/;
   const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimeType = allowedTypes.test(file.mimetype);
 
@@ -85,6 +85,7 @@ exports.addProduct = async (req, res) => {
 
 // ✅ Update Pooja Samagri Product
 exports.updateProduct = async (req, res) => {
+  console.log(req.body);
   upload.single("featuredImage")(req, res, async function (err) {
     if (err) {
       return res.status(400).json({ success: false, message: err.message });
