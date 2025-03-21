@@ -5,7 +5,6 @@ const ecomCartSchema = new mongoose.Schema(
     user_id: {
       type: String,
       required: true,
-      ref: "User",
     },
     username: {
       type: String,

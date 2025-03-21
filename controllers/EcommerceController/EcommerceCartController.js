@@ -44,7 +44,15 @@ exports.ecomaddToCart = async (req, res) => {
 exports.ecomgetCart = async (req, res) => {
   try {
       const { user_id } = req.params;
-      const cartItems = await Cart.find({ user_id });
+      console.log("User ID:", user_id); // Debugging log
+      if (!user_id) {
+          return res.status(400).json({ success: false, message: "User ID is required" });
+      }
+      const cartItems = await Cart.find({ 'user_id': user_id });
+      console.log("Cart Items:", cartItems); // Debugging log
+      if (!cartItems || cartItems.length === 0) {
+          return res.status(404).json({ success: false, message: "No items found in cart" });
+      }
       // Calculate total quantity and total price
       let totalProducts = 0;
       let totalPrice = 0;
@@ -54,6 +62,7 @@ exports.ecomgetCart = async (req, res) => {
           totalProducts += quantity;
           totalPrice += quantity * price;
       });
+
       res.status(200).json({ success: true, cartItems, totalProducts, totalPrice });
   } catch (error) {
       res.status(500).json({ success: false, message: "Error fetching cart data", error: error.message });

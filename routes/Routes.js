@@ -17,7 +17,7 @@ const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
 const { createPoojaBooking,createBhanjanMandaliBooking,getBhajanOrder,getOrder,addDeliveryAddress,getDeliveryAddress,
     getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,
-    updateMandaliOrder,getDeliveryAddressByUSerID,acceptOrRejectMandaliBooking} = require("../controllers/orderController");
+    updateMandaliOrder,getDeliveryAddressByUSerID,acceptOrRejectMandaliBooking,cancelPoojaBooking} = require("../controllers/orderController");
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
 const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin} = require("../controllers/bhajanmandalController");
@@ -29,7 +29,7 @@ const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,upda
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
 const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
-
+const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updatecommmission} = require("../controllers/SettingController");
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -69,6 +69,7 @@ router.put('/pooja/category/update-category/:id', authenticateToken , updatePooj
 router.put('/pooja/category/update-status', authenticateToken , updatePoojaCategoryStatus);
 router.get('/pooja/all-samagri/', authenticateToken, getPoojaSamaagri);
 router.post('/pooja/add-samagri/', authenticateToken, createPoojaSamagri);
+router.put('/pooja/cancel-booking/',authenticateToken,cancelPoojaBooking);
 router.get('/pooja/samagri/:id',authenticateToken,samagriByPoojaId);
 router.post("/order/pooja-booking",authenticateToken, createPoojaBooking); 
 router.get("/orders/:orderId",authenticateToken, getOrder); 
@@ -79,7 +80,7 @@ router.get("/orders",authenticateToken,getAllOrders);
 router.get('/order-address',authenticateToken,getAllOrdersWithAddress);
 router.get("/orders/user/:userId",authenticateToken, getPoojaOrdersByUserId);
 router.post("/orders/acceptReject",authenticateToken,acceptRejectBooking);
-router.get("/user/get-booking-user/:userId",authenticateToken,getPoojaBookingUser);
+router.get("/user/get-booking-user/:userId/:bookingstatus",authenticateToken,getPoojaBookingUser);
 router.get("/user/delivery-address/:userId",authenticateToken,getDeliveryAddressByUSerID);
 
 // End Pooja Routes
@@ -103,7 +104,7 @@ router.delete('/pandit/delete-pandit/:id',authenticateToken,deletePanditById);
 router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
 router.get('/pandit/get-pandit/:id',authenticateToken,getPanditById);
-router.get('/pandit/pooja-booking/:panditId',authenticateToken,getPoojaBookingPandit);
+router.get('/pandit/pooja-booking/:panditId/:bookingstatus',authenticateToken,getPoojaBookingPandit);
 router.put('/pandit/update-category',authenticateToken,createPanditCategory);
 router.get('/pandit/get-category/:pandit_id',authenticateToken,getPanditCategoryByPanditId);
 router.post('/pandit/forget-password',authenticateToken,forgotPassword);
@@ -192,6 +193,14 @@ router.get("/user/:id",authenticateToken,getUserById);
 
 // Ecommerce Review 
 
+//App Settings
+
+router.post("/setting/create-range",authenticateToken,createPanditRange);
+router.get("/setting/pandit-range",authenticateToken,getPanditRange);
+router.put("/setting/update-range",authenticateToken,updatePanditRange);
+router.post("/setting/create-commission",authenticateToken,createCommision);
+router.get("/setting/commission",authenticateToken,getCommission);
+router.put("/setting/update-commision",authenticateToken,updatecommmission);
 
 // Story Section 
 router.post("/story/add",authenticateToken,addStory);

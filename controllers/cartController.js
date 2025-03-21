@@ -85,7 +85,7 @@ exports.addToCart = async (req, res) => {
     });
 
     await cartItem.save();
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "Product added to cart successfully",
       cart: cartItem,

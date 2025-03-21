@@ -106,7 +106,7 @@ exports.createPooja = [
             const mockRes = httpMocks.createResponse();
             await createPoojaSamagri(mockReq, mockRes);
             const samagriResponseData = mockRes._getJSONData();
-        console.log('Saved Samagri Data:', samagriResponseData);
+            console.log('Saved Samagri Data:', samagriResponseData);
           }
         }
       }
@@ -293,7 +293,8 @@ exports.deletePooja = async (req, res) => {
 exports.getPoojaBookingPandit =async(req,res)=>{
   try{
     const {panditId}= req.params;
-    const poojaBooking = await PoojaBooking.findOne({panditId: panditId });
+    const {bookingstatus} = req.params;
+    const poojaBooking = await PoojaBooking.findOne({panditId: panditId,bookingStatus:bookingstatus });
     if (!poojaBooking) {
       return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
     }
@@ -308,7 +309,8 @@ exports.getPoojaBookingPandit =async(req,res)=>{
 exports.getPoojaBookingUser = async(req,res)=>{
   try{
     const {userId}= req.params;
-    const poojaBooking = await PoojaBooking.findOne({});
+    const {bookingstatus} = req.params;
+    const poojaBooking = await PoojaBooking.find({"userDetails.userId":userId,bookingStatus:bookingstatus});
     if(!poojaBooking){
       return res.status(404).json({message:"No Pooja Booking Found",status:0});
     }
