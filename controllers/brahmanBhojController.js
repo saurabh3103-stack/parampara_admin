@@ -1,11 +1,13 @@
-const BrahmanBhoj = require('../models/bhajanmandalModel');
+const BrahmanBhoj = require('../models/brahmanBhojModel');
 const generateNumericUUID = () => {
-    const uuid = uuidv4().replace(/-/g, ''); // Remove hyphens
-    const numericId = uuid.split('').map(char => char.charCodeAt(0) % 10).join(''); // Convert each character to a number
-    return numericId;
-  };
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[-:.TZ]/g, '').slice(8, 14); // Extract HHMMSS from ISO format
+  return `${timestamp}`;
+};
+    
 exports.createBrahmanBhoj = async (req,res) => {
     try {
+        console.log(req.body);
         const{
             user_name,
             email,
@@ -13,13 +15,34 @@ exports.createBrahmanBhoj = async (req,res) => {
             date,
             attendees,
             address,
-            location,
+            street,
+            city,
+            state,
+            zip_code,
+            longitude,
+            latitude,
+            meal_type,
+            occasion,
             notes,
         } = req.body;
         const newBrahmanBhoj = new BrahmanBhoj({
-            bhojId : generateNumericUUID(),
-            user_name,email,
-            phone,date,attendees,address,location,notes,
+            bhojId : "BRAHMANBHOJ"+generateNumericUUID(),
+            user_name,
+            email,
+            phone,
+            date,
+            meal_type,
+            occasion,
+            attendees,
+            address,
+            street,
+            city,
+            state,
+            zip_code,
+            location:{
+                longitude,
+                latitude
+            },notes,
         });
         await newBrahmanBhoj.save();
         res.status(200).json({message:"Brahman Bhoj Save",status:1});

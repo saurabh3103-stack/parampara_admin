@@ -91,3 +91,16 @@ exports.getactiveVideosByBhajanMandal = async (req, res) => {
         res.status(500).json({ message: error.message, status: 0 });
     }
 };
+
+exports.getAllBhajanMandalVideos = async (req, res) => {
+    try {
+        const videos = await Video.find().populate('bhajan_mandal_id'); 
+        if (!videos.length) {
+            return res.status(404).json({ message: "No videos found", status: 0 });
+        }
+        res.status(200).json({ message: "All Bhajan Mandali videos fetched successfully", data: videos, status: 1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+
+}

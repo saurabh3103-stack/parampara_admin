@@ -5,7 +5,7 @@ const Pooja = require('../models/PoojaModel');
 const PoojaBooking = require('../models/PoojaBooking');
 const httpMocks = require('node-mocks-http');
 const { createPoojaSamagri } = require('../controllers/poojaSamagriController');
-
+const MissedPoojaBooking = require('../models/missedPoojaBookingModel');
 // Multer configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -294,7 +294,7 @@ exports.getPoojaBookingPandit =async(req,res)=>{
   try{
     const {panditId}= req.params;
     const {bookingstatus} = req.params;
-    const poojaBooking = await PoojaBooking.findOne({panditId: panditId,bookingStatus:bookingstatus });
+    const poojaBooking = await PoojaBooking.find({panditId: panditId,bookingStatus:bookingstatus });
     if (!poojaBooking) {
       return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
     }
@@ -304,7 +304,18 @@ exports.getPoojaBookingPandit =async(req,res)=>{
   }
 }
 
-
+exports.getmissedBooking = async(req,res)=>{
+  try{
+    const {panditId}= req.params;
+    const poojaBooking = await MissedPoojaBooking.find({pandit_id: panditId});
+    if (!poojaBooking) {
+      return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
+    }
+    return res.status(200).json({ message: "Pooja Booking Details", status: 1, data: poojaBooking });
+  }catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}
 
 exports.getPoojaBookingUser = async(req,res)=>{
   try{

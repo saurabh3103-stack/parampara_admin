@@ -6,7 +6,7 @@ const pandit = require("../models/panditModel");
 const User = require("../models/userModel");
 const MandaliBooking = require("../models/BhajanMandalBooking");
 const PanditCategory = require('../models/panditCategoryModel');
-
+const MissedPoojaBooking = require('../models/missedPoojaBookingModel');
 const generateNumericUUID = () => {
   const uuid = uuidv4().replace(/-/g, ''); // Remove hyphens
   const numericId = uuid.split('')
@@ -100,7 +100,7 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 const assignPandit = async (poojaBooking, userLat, userLong, index) => {
   try {
     const poojaId = poojaBooking.bookingDetails.poojaId;
-    let panditCategories = await PanditCategory.find({ pooja_id: poojaId });
+    let panditCategories = await PanditCategory.find({ pooja_id: poojaId,status:1 });
     if (!panditCategories.length) {
       return { status: 404, message: "No Pandit category found for this pooja.", accepted: false };
     }
@@ -133,7 +133,6 @@ const assignPandit = async (poojaBooking, userLat, userLong, index) => {
 const sendNotificationToPandit = async (fcmToken, poojaBooking,index) => {
   const  indexval = index
   const  newindex = indexval.toString();
-
   if (!fcmToken) {
     console.log("❌ No FCM token available for this Pandit.");
     return false;
@@ -175,7 +174,7 @@ const sendNotificationToPandit = async (fcmToken, poojaBooking,index) => {
 const acceptRejectBooking = async (req, res) => {
   console.log("Full Request Body:", JSON.stringify(req.body, null, 2)); // Pretty print the JSON
   try {
-    const { panditId, bookingId, status, userLat, userLong } = req.body;
+    const { panditId, bookingId, status, userLat, userLong,isAutomatic } = req.body;
     if (!panditId || !bookingId || status === undefined) {
       return res.status(400).json({ message: "Missing required fields", status: 0 });
     }
@@ -195,6 +194,21 @@ const acceptRejectBooking = async (req, res) => {
       }
       return res.status(200).json({ message: "Booking accepted.", status: 1 });
     } else {
+      const missedBooking = new MissedPoojaBooking({
+          pandit_id: panditId,
+          isAutomatic: isAutomatic,
+          bookingDetails: {
+              poojaId: poojaBooking.bookingDetails.poojaId,
+              poojaName: poojaBooking.bookingDetails.poojaName,
+              Type: poojaBooking.bookingDetails.Type,
+              isSamagriIncluded: poojaBooking.bookingDetails.isSamagriIncluded,
+          },
+          schedule: {
+              date: poojaBooking.schedule.date,
+              time: poojaBooking.schedule.time
+          },
+      });
+      await missedBooking.save();
       assignPandit(poojaBooking, userLat, userLong, req.body.index + 1);
       return res.status(200).json({ message: "Booking sent to a new Pandit.", status: 1 });
     }

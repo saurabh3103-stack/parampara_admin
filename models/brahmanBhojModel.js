@@ -16,21 +16,44 @@ const brahmanBhojSchema = new mongoose.Schema({
     date:{
         type:Date,
     },
+    meal_type:{
+        type:String
+    },
+    occasion:{
+        type:String
+    },
     attendees:{
         type:String,
     },
     address : {
         type:String,
     },
-    location: {
+    street:{
         type:String,
+    },
+    city:{
+        type:String,
+    },
+    state:{
+        type:String,
+    },
+    country:{
+        type:String,
+        default:null
+    },
+    zip_code:{
+        type:String,
+    },
+    location: {
+        longitude: { type: Number },
+        latitude: { type: Number },
     },
     notes:{
         type:String,
     },
     status:{
         type:String,
-        default:1,
+        default:0,
     },
     created_at: {
         type: Date,

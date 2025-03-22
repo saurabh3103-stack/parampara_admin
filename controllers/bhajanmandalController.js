@@ -4,6 +4,7 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10; // Define the number of salt rounds for hashing
 const BhajanMandal = require('../models/bhajanmandalModel');
+const MandaliBooking = require("../models/BhajanMandalBooking");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -52,12 +53,10 @@ exports.createBhajan = [
                 !owner_name || !owner_email || !owner_phone || !owner_password) {
                 return res.status(400).json({ message: 'All required fields must be provided', status: 0 });
             }
-
             let bhajan_image = null;
             if (req.file) {
                 bhajan_image = `/uploads/bhajan_image/${req.file.filename}`;
             }
-
             // Hash the owner's password
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(owner_password, salt);
@@ -243,3 +242,32 @@ exports.bhajanLogin = async (req, res) => {
     }
 };
 
+
+exports.bhajanMandaliBookingUser = async(req,res)=>{
+    const {userId}= req.params;
+    const {bookingstatus} = req.params;
+    try{
+        const mandaliBooking = await MandaliBooking.find({"userDetails.userId":userId,bookingStatus:bookingstatus});
+        if(!mandaliBooking){
+          return res.status(404).json({message:"No Pooja Booking Found",status:0});
+        }
+        return res.status(200).json({message:"Pooja Booking Details",status:1,data:mandaliBooking});
+    }
+    catch(error){
+        res.status(500).json({message:error.message,status:0});
+    }
+}
+
+exports.getBhajanMandaliBooking =async(req,res)=>{
+  try{
+    const {mandaliId}= req.params;
+    const {bookingstatus} = req.params;
+    const poojaBooking = await MandaliBooking.findOne({"bookingDetails.mandaliId": mandaliId,bookingStatus:bookingstatus });
+    if (!poojaBooking) {
+      return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
+    }
+    return res.status(200).json({ message: "Pooja Booking Details", status: 1, data: poojaBooking });
+  }catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}
