@@ -331,3 +331,30 @@ exports.getPoojaBookingUser = async(req,res)=>{
     res.status(500).json({message:error.message,status:0});
   }
 }
+
+exports.getAllPoojaBookingUser = async(req,res)=>{
+  try{
+    const {userId}= req.params;
+    const poojaBooking = await PoojaBooking.find({"userDetails.userId":userId});
+    if(!poojaBooking){
+      return res.status(404).json({message:"No Pooja Booking Found",status:0});
+    }
+    return res.status(200).json({message:"Pooja Booking Details",status:1,data:poojaBooking});
+  }
+  catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}
+
+exports.getAllPoojaBookingPandit =async(req,res)=>{
+  try{
+    const {panditId}= req.params;
+    const poojaBooking = await PoojaBooking.find({panditId: panditId });
+    if (!poojaBooking) {
+      return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
+    }
+    return res.status(200).json({ message: "Pooja Booking Details", status: 1, data: poojaBooking });
+  }catch(error){
+    res.status(500).json({message:error.message,status:0});
+  }
+}

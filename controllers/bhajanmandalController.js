@@ -5,7 +5,16 @@ const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10; // Define the number of salt rounds for hashing
 const BhajanMandal = require('../models/bhajanmandalModel');
 const MandaliBooking = require("../models/BhajanMandalBooking");
+const Partner = require("../models/partnerModel");
 
+const generateUserID = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const time = now.getHours().toString().padStart(2, '0') +
+                 now.getMinutes().toString().padStart(2, '0') +
+                 now.getSeconds().toString().padStart(2, '0');
+    return `VEDIC${year}${time}`;
+  };
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const folderPath = path.join(__dirname, '..', 'public', 'uploads', 'bhajan_image');
@@ -39,8 +48,8 @@ const upload = multer({
 exports.createBhajan = [
     upload,
     async (req, res) => {
-        console.log(req.body);
         try {
+            const userID = generateUserID();
             const {
                 bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
                 short_discription, long_discription, address, city, location, state, country, pin_code, area,
@@ -53,23 +62,47 @@ exports.createBhajan = [
                 !owner_name || !owner_email || !owner_phone || !owner_password) {
                 return res.status(400).json({ message: 'All required fields must be provided', status: 0 });
             }
+
             let bhajan_image = null;
             if (req.file) {
                 bhajan_image = `/uploads/bhajan_image/${req.file.filename}`;
             }
+
             // Hash the owner's password
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(owner_password, salt);
 
+            // Create Bhajan Mandal
             const newBhajan = new BhajanMandal({
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
+                bhajan_name, slug_url,userID, bhajan_category, bhajan_price, bhajan_member, exp_year,
                 short_discription, long_discription, bhajan_image, status: 1,
                 mandali_address: { address, city, location, state, country, pin_code, area },
-                bhajan_owner: { owner_name: owner_name, owner_email: owner_email, owner_phone: owner_phone, owner_password: hashedPassword }
+                bhajan_owner: { owner_name, owner_email, owner_phone, owner_password: hashedPassword }
             });
 
             await newBhajan.save();
-            res.status(201).json({ message: 'Bhajan Added Successfully', data: newBhajan, status: 1 });
+            // Create Partner entry
+            const newPartner = new Partner({
+                userId: userID,
+                user_type: 'bhajan_mandal',
+                username: owner_name,
+                name: owner_name,
+                email: owner_email,
+                mobile: owner_phone,
+                password: hashedPassword,
+                address, city, state, country, pincode: pin_code,
+                image: bhajan_image,
+                status: 1
+            });
+
+            await newPartner.save();
+
+            res.status(201).json({
+                message: 'Bhajan Added Successfully',
+                data: { bhajan: newBhajan, partner: newPartner },
+                status: 1
+            });
+
         } catch (error) {
             res.status(500).json({ message: error.message, status: 0 });
         }
@@ -127,16 +160,20 @@ exports.updateBhajanStatus = async (req, res) => {
 };
 
 // **Update Bhajan**
+
 exports.updateBhajan = [
     upload,
     async (req, res) => {
+        console.log(req.body);
         try {
             const {
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
-                short_discription, long_discription,address, city, location, state, country, pin_code, area
+                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
+                short_discription, long_discription, address, city, location, state, country, pin_code, area,fcm_tokken,owner_name,owner_email,owner_phone
             } = req.body;
 
-            let bhajan = await BhajanMandal.findById(req.params.id);
+            const userId = req.params.id;
+
+            let bhajan = await BhajanMandal.findOne({ userID: userId });
             if (!bhajan) {
                 return res.status(404).json({ message: 'Bhajan not found', status: 0 });
             }
@@ -146,18 +183,53 @@ exports.updateBhajan = [
                 bhajan_image = `/uploads/bhajan_image/${req.file.filename}`;
             }
 
-            bhajan = await BhajanMandal.findByIdAndUpdate(req.params.id, {
-                bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member,exp_year,
-                short_discription, long_discription, bhajan_image,
-                mandali_address: { address, city, location, state, country, pin_code, area }
-            }, { new: true });
+            // Update Bhajan Mandal
+            bhajan = await BhajanMandal.findOneAndUpdate(
+                { userID: userId },
+                {
+                    bhajan_name,fcm_tokken, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
+                    short_discription, long_discription, bhajan_image,
+                    bhajan_owner: { owner_name:owner_name, owner_email:owner_email, owner_phone:owner_phone, fcm_tokken:fcm_tokken },
+                    mandali_address: { address, city, location, state, country, pin_code, area },
+                    updated_at: Date.now() // Ensure updated_at is refreshed
+                },
+                { new: true }
+            );
 
-            res.status(200).json({ message: 'Bhajan updated successfully', data: bhajan, status: 1 });
+            // Ensure `bhajan_owner` exists before accessing its properties
+            if (!bhajan.bhajan_owner) {
+                return res.status(400).json({ message: 'Bhajan owner details missing', status: 0 });
+            }
+
+            let partner = await Partner.findOne({ userID: userId });
+            if (partner) {
+                partner = await Partner.findOneAndUpdate(
+                    { userID: userId },
+                    {
+                        username: bhajan.bhajan_owner.owner_name,
+                        name: bhajan.bhajan_owner.owner_name,
+                        email: bhajan.bhajan_owner.owner_email,
+                        mobile: bhajan.bhajan_owner.owner_phone,
+                        address, city, state, country, pincode: pin_code,
+                        image: bhajan_image,
+                        updated_at: Date.now()
+                    },
+                    { new: true }
+                );
+            }
+
+            res.status(200).json({
+                message: 'Bhajan updated successfully',
+                data: { bhajan, partner },
+                status: 1
+            });
         } catch (error) {
             res.status(500).json({ message: error.message, status: 0 });
         }
     },
 ];
+
+
 
 // Get Bhajan by ID
 exports.getBhajanById = async (req, res) => {

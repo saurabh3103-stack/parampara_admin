@@ -51,6 +51,18 @@ const bhajanBookingSchema = new mongoose.Schema({
           type: String, // Stored as a string (e.g., "10:30 AM")
           default: null,
         },
+        bhajanStartTime: {
+          type: String, // Start time of pooja (e.g., "11:00 AM")
+          default: null,
+        },
+        bhajanEndTime: {
+          type: String, // End time of pooja (e.g., "12:30 PM")
+          default: null,
+        },
+        ongoingStatus: {
+          type: Boolean, // true if pooja is ongoing, false otherwise
+          default: null,
+        },
       },
       paymentDetails: {
         amount: {
@@ -75,6 +87,10 @@ const bhajanBookingSchema = new mongoose.Schema({
           type: Date,
           default: null, // Default to null if no transaction date is recorded
         },
+      },
+      otp:{
+        type:String,
+        default:null,
       },
       createdAt: {
         type: Date,

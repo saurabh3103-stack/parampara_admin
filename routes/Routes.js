@@ -7,7 +7,7 @@ const { createUser, getUsers,loginUser, getUserByEmail,updateUser ,updateUserSta
 const { createlocation, getlocation } = require('../controllers/locationController');
 const { createAdmin, getAdmin } = require('../controllers/adminController');
 const { createPoojaCategory, getPoojaCategory, getPoojaCategoryWeb ,deletePoojaCategory, getPoojaCategoryById, updatePoojaCategroy, updatePoojaCategoryStatus} = require('../controllers/poojaCategoryController');
-const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatus, deletePooja, getPoojaById,updatePoojaById,getPoojaBookingPandit,getPoojaBookingUser,getPoojaByCategoryId,getmissedBooking } = require('../controllers/poojaController');
+const { createPooja, getPooja, getPoojaUser , getPoojaUserbyID, updatePoojaStatus, deletePooja, getPoojaById,updatePoojaById,getPoojaBookingPandit,getPoojaBookingUser,getPoojaByCategoryId,getmissedBooking,getAllPoojaBookingUser,getAllPoojaBookingPandit } = require('../controllers/poojaController');
 const { createPoojaSamagri, getPoojaSamaagri,samagriByPoojaId } = require('../controllers/poojaSamagriController');
 const { createSliderCategory,getSliderCategory, deleteSliderCategory, getSliderCategoryById, updateSliderCategory,updateSliderCategoryStatus} = require('../controllers/appSliderCategoryController');
 const { createSlider,getSlider, getSliderUser, deleteSlider, getSliderById, updateSlider, updateSliderStatus } = require('../controllers/appSliderController');
@@ -15,14 +15,13 @@ const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
-const { createPoojaBooking,createBhanjanMandaliBooking,getBhajanOrder,getOrder,addDeliveryAddress,getDeliveryAddress,
-    getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,
-    updateMandaliOrder,getDeliveryAddressByUSerID,acceptOrRejectMandaliBooking,cancelPoojaBooking} = require("../controllers/orderController");
+const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress,getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,getDeliveryAddressByUSerID,cancelPoojaBooking,poojaStart,poojaComplete} = require("../controllers/orderController");
+const { createBhanjanMandaliBooking,getBhajanOrder,acceptOrRejectMandaliBooking,updateMandaliOrder,startBhajanMandal,completeBhajanMandal} = require('../controllers/bhajanmandalBookingController');    
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
 const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin,bhajanMandaliBookingUser,getBhajanMandaliBooking} = require("../controllers/bhajanmandalController");
 const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal,getactiveVideosByBhajanMandal,getAllBhajanMandalVideos } = require('../controllers/bhajanvideoController');
-const { createBrahmanBhoj,getBrahmanBhoj } = require('../controllers/brahmanBhojController');
+const { createBrahmanBhoj,getBrahmanBhoj,getBrahmanBhojByID,cancelBrahmanByID,getBrahmanBhojByuserID } = require('../controllers/brahmanBhojController');
 const { createCategory,getAllCategories,getActiveCategories,getCategoryById,updateCategory,deleteCategory,activeInactive}= require('../controllers/EcommerceController/ProductCategoryController');
 const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = require("../controllers/EcommerceController/EcommerceCartController");
 
@@ -31,6 +30,8 @@ const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,upda
 const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
 const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updatecommmission} = require("../controllers/SettingController");
+const { loginPartner } = require("../controllers/partnerController");
+const { createBhavyaAyojan,getBhavyaAyojan,getBhavyaAyojanByID,cancelBhavyaAyojanByID,getBhavyaAyojanByUserID } = require("../controllers/bhavyaAyojanController");
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -50,6 +51,11 @@ router.post('/user/verify-otp',authenticateToken,verifyOtpUser);
 router.put('/user/reset-password',authenticateToken,resetPassword);
 router.post('/location/', authenticateToken, createlocation);
 router.get('/location/', authenticateToken, getlocation);
+// Partner Login
+
+router.post('/partner/login',authenticateToken,loginPartner);
+
+// Partner Login
 
 // Start Pooja Routes
 router.get('/pooja/all-pooja/', authenticateToken, getPooja);
@@ -82,6 +88,7 @@ router.get('/order-address',authenticateToken,getAllOrdersWithAddress);
 router.get("/orders/user/:userId",authenticateToken, getPoojaOrdersByUserId);
 router.post("/orders/acceptReject",authenticateToken,acceptRejectBooking);
 router.get("/user/get-booking-user/:userId/:bookingstatus",authenticateToken,getPoojaBookingUser);
+router.get("/user/get-booking-user/:userId",authenticateToken,getAllPoojaBookingUser);
 router.get("/user/delivery-address/:userId",authenticateToken,getDeliveryAddressByUSerID);
 router.get("/user/get-mandali-booking/:userId/:bookingstatus",authenticateToken,bhajanMandaliBookingUser);
 
@@ -107,13 +114,15 @@ router.get('/pandit/all-pandit',authenticateToken,getPandits);
 router.post('/pandit/login-pandit',authenticateToken,loginPandit);
 router.get('/pandit/get-pandit/:id',authenticateToken,getPanditById);
 router.get('/pandit/pooja-booking/:panditId/:bookingstatus',authenticateToken,getPoojaBookingPandit);
+router.get('/pandit/pooja-booking/:panditId',authenticateToken,getAllPoojaBookingPandit);
 router.get('/pandit/missed-booking/:panditId',authenticateToken,getmissedBooking);
 router.put('/pandit/update-category',authenticateToken,createPanditCategory);
 router.get('/pandit/get-category/:pandit_id',authenticateToken,getPanditCategoryByPanditId);
 router.post('/pandit/forget-password',authenticateToken,forgotPassword);
 router.post('/pandit/verify-otp',authenticateToken,verifyOtppandit);
 router.put('/pandit/reset-password',authenticateToken,resetpassword);
-
+router.post('/pandit/start-pooja',authenticateToken,poojaStart);
+router.post('/pandit/complete-pooja',authenticateToken,poojaComplete);
 router.post("/otp/send-otp", authenticateToken ,sendOtp);
 router.post("/otp/verify-otp", authenticateToken,verifyOtp);
 router.post("/cart/addCart",authenticateToken,addToCart);
@@ -153,6 +162,8 @@ router.post('/order/bhajan-mandali',authenticateToken,createBhanjanMandaliBookin
 router.get('/order/bhajan-mandli/:orderId',authenticateToken,getBhajanOrder);
 router.put('/order/update-mandali-order',authenticateToken,updateMandaliOrder);
 router.put('/order/accept-reject-mandali',authenticateToken,acceptOrRejectMandaliBooking);
+router.post('/bhajan-mandali/start-bhajan',authenticateToken,startBhajanMandal);
+router.post('/bhajan-mandali/complete-bhajan',authenticateToken,completeBhajanMandal);
 // Bhajan Mandal Routes end
 // Ecommerce Section 
 router.post("/product/category",authenticateToken,createCategory);
@@ -219,7 +230,18 @@ router.put("/story/update-story/:id",authenticateToken,updateStory);
 
 router.post('/brahman-bhoj/create-request',authenticateToken,createBrahmanBhoj);
 router.get('/brahman-bhoj/get-bhoj-request',authenticateToken,getBrahmanBhoj);
+router.get('/brahman-bhoj/get-details/:id',authenticateToken,getBrahmanBhojByID);
+router.put('/brahman-bhoj/cancel-request/:id',authenticateToken,cancelBrahmanByID);
+router.get('/brahman-bhoj/user/:userId',authenticateToken,getBrahmanBhojByuserID);
 // Brahman Bhoj
+// Bhavya ayojan
 
+router.post('/bhavya-ayojan/create',authenticateToken ,createBhavyaAyojan);
+router.get('/bhavya-ayojan/all', authenticateToken,getBhavyaAyojan);
+router.get('/bhavya-ayojan/:id',authenticateToken ,getBhavyaAyojanByID);
+router.put('/bhavya-ayojan/cancel/:id', authenticateToken,cancelBhavyaAyojanByID);
+router.get('/bhavya-ayojan/user-id/:userId',authenticateToken,getBhavyaAyojanByUserID);
+
+// Bhavya ayojan
 module.exports = router;
 

@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const brahmanBhojSchema = new mongoose.Schema({
+    userId: {
+        type:String,
+        default:null,
+    },
     bhojId: {
         type:String,
     },

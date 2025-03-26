@@ -9,6 +9,7 @@ exports.createBrahmanBhoj = async (req,res) => {
     try {
         console.log(req.body);
         const{
+            userId,
             user_name,
             email,
             phone,
@@ -26,6 +27,7 @@ exports.createBrahmanBhoj = async (req,res) => {
             notes,
         } = req.body;
         const newBrahmanBhoj = new BrahmanBhoj({
+            userId,
             bhojId : "BRAHMANBHOJ"+generateNumericUUID(),
             user_name,
             email,
@@ -62,3 +64,48 @@ exports.getBrahmanBhoj = async (req,res)=>{
         res.status(500).json({message:error.message,status:0})
     }
 }
+
+exports.getBrahmanBhojByID = async (req, res) => {
+    try {
+        const { id } = req.params; // ✅ Corrected syntax
+        const brahmanBhoj = await BrahmanBhoj.findById(id);
+        
+        if (!brahmanBhoj) {
+            return res.status(404).json({ message: "No Brahman Bhoj Found", status: 0 });
+        }
+
+        res.status(200).json({ data: brahmanBhoj, status: 1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+};
+
+exports.getBrahmanBhojByuserID = async (req, res) => {
+    try {
+        const { userId } = req.params; // ✅ Corrected syntax
+        const brahmanBhoj = await BrahmanBhoj.find({'userId':userId});
+        if (!brahmanBhoj) {
+            return res.status(404).json({ message: "No Brahman Bhoj Found", status: 0 });
+        }
+        res.status(200).json({ data: brahmanBhoj, status: 1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+};
+
+exports.cancelBrahmanByID = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedBhoj = await BrahmanBhoj.findByIdAndUpdate(
+            id,
+            { status: 2 }, 
+            { new: true } 
+        );
+        if (!updatedBhoj) {
+            return res.status(404).json({ message: "No Brahman Bhoj Found", status: 0 });
+        }
+        res.status(200).json({ message: "Brahman Bhoj Cancelled", status: 1});
+    } catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+};

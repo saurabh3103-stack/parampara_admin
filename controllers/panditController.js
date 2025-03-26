@@ -4,6 +4,16 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const Pandit = require('../models/panditModel');
 const PanditCategory = require('../models/panditCategoryModel');
+const Partner = require('../models/partnerModel');
+
+const generateUserID = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const time = now.getHours().toString().padStart(2, '0') +
+               now.getMinutes().toString().padStart(2, '0') +
+               now.getSeconds().toString().padStart(2, '0');
+  return `VEDIC${year}${time}`;
+};
 // Multer configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -54,24 +64,29 @@ exports.createPandit = [
   async (req, res) => {
     try {
       const { password, ...otherDetails } = req.body;
-
-      // Check if files are uploaded and assign correct paths
+      const userID = generateUserID();
       let imagePath = req.files?.image ? req.files.image[0].path.replace(/\\/g, "/") : null;
       let aadharImagePath = req.files?.aadhar_image ? req.files.aadhar_image[0].path.replace(/\\/g, "/") : null;
-
-      // Hash the password
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-      // Create Pandit instance
       const newPandit = new Pandit({
         ...otherDetails,
+        userID,
         password: hashedPassword,
         image: imagePath,
         aadhar_image: aadharImagePath,
       });
       await newPandit.save();
-      // Prepare response without password
+      
+      const newPartner = new Partner({
+        ...otherDetails,
+        userID,
+        password: hashedPassword,
+        user_type: 'pandit',
+        image: imagePath,
+      });
+      await newPartner.save();
+      
       const panditResponse = newPandit.toObject();
       delete panditResponse.password;
 
@@ -81,7 +96,6 @@ exports.createPandit = [
     }
   },
 ];
-
 
 exports.createPanditCategory = async(req,res) =>{
   try{
@@ -129,46 +143,48 @@ exports.getPanditCategoryByPanditId = async (req, res) => {
 };
 
 exports.updatePanditById = [
-  upload, // Multer middleware for image upload
+  upload,
   async (req, res) => {
-    console.log(req.body);
-    console.log("Uploaded File:", req.files); // Debugging: Check if files are received
-
     try {
-      const { id } = req.params; // Get Pandit ID from request params
-      const { password, ...otherDetails } = req.body; // Extract password and other details
+      const { id } = req.params;
+      const { password, ...otherDetails } = req.body;
       let updatedData = { ...otherDetails };
-      // Hash new password if updated
+      
       if (password) {
         const saltRounds = 10;
         updatedData.password = await bcrypt.hash(password, saltRounds);
       }
-      // Handle image update if any
+      
       if (req.files?.image) {
-        updatedData.image = req.files.image[0].filename; // Store only the filename (string)
+        updatedData.image = req.files.image[0].filename;
       }
-
+      
       if (req.files?.aadhar_image) {
-        updatedData.aadhar_image = req.files.aadhar_image[0].filename; // Store only the filename (string)
+        updatedData.aadhar_image = req.files.aadhar_image[0].filename;
       }
-
-      // Find and update the Pandit
+      
       const updatedPandit = await Pandit.findByIdAndUpdate(id, updatedData, { new: true });
       if (!updatedPandit) {
         return res.status(404).json({ message: 'Pandit not found', status: 0 });
       }
-
-      // Remove sensitive info before sending response
+      
+      await Partner.findOneAndUpdate(
+        { userID: updatedPandit.userID },
+        { ...updatedData },
+        { new: true }
+      );
+      
       const panditResponse = updatedPandit.toObject();
       delete panditResponse.password;
-
+      
       res.status(200).json({ message: 'Pandit updated successfully', status: 1, data: panditResponse });
     } catch (error) {
       res.status(500).json({ message: error.message, status: 0 });
-      console.log(error.message);
     }
   }
 ];
+
+
 
 // Get all Pandits
 exports.getPandits = async (req, res) => {
@@ -324,3 +340,4 @@ exports.resetpassword = async (req, res) => {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+

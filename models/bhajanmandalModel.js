@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const bhajanMandalSchema = new mongoose.Schema({
     bhajan_name: { type: String, required: true },
+    userID : {type:String},
     slug_url: { type: String, required: true },
     bhajan_category: { type: String, required: true },
     bhajan_image: { type: String },

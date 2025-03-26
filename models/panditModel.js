@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const panditSchema = new mongoose.Schema({
+  userID:{type:String},
   username: { type: String, required: true },
   name: {type: String, default : null },
   email: { type: String, required: true, unique: true },
