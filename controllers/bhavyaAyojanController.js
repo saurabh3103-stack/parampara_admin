@@ -19,10 +19,15 @@ exports.createBhavyaAyojan = async (req, res) => {
             occasion,
             guest_count,
             venue,
-            address,
+            address: {
+                home,
+                street,
+                city,
+                state,
+                pin_code
+            },            
             special_requirements
         } = req.body;
-
         const newBooking = new BhavyaAyojan({
             userId,
             bookingId: "BHAVYABOOK" + generateNumericUUID(),
@@ -34,10 +39,15 @@ exports.createBhavyaAyojan = async (req, res) => {
             occasion,
             guest_count,
             venue,
-            address,
+            address: {
+                home,
+                street,
+                city,
+                state,
+                pin_code
+            },
             special_requirements
         });
-
         await newBooking.save();
         res.status(201).json({ message: "Bhavya Ayojan Booking Saved", status: 1 });
     } catch (error) {

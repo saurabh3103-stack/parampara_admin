@@ -19,7 +19,7 @@ const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress,getAll
 const { createBhanjanMandaliBooking,getBhajanOrder,acceptOrRejectMandaliBooking,updateMandaliOrder,startBhajanMandal,completeBhajanMandal} = require('../controllers/bhajanmandalBookingController');    
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
-const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin,bhajanMandaliBookingUser,getBhajanMandaliBooking} = require("../controllers/bhajanmandalController");
+const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin,bhajanMandaliBookingUser,getBhajanMandaliBooking,getAllBhajanMandaliBooking,bhajanMandaliBookingUserID} = require("../controllers/bhajanmandalController");
 const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal,getactiveVideosByBhajanMandal,getAllBhajanMandalVideos } = require('../controllers/bhajanvideoController');
 const { createBrahmanBhoj,getBrahmanBhoj,getBrahmanBhojByID,cancelBrahmanByID,getBrahmanBhojByuserID } = require('../controllers/brahmanBhojController');
 const { createCategory,getAllCategories,getActiveCategories,getCategoryById,updateCategory,deleteCategory,activeInactive}= require('../controllers/EcommerceController/ProductCategoryController');
@@ -28,7 +28,7 @@ const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = requir
 const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug,featuredProduct,offeredproduct } = require('../controllers/EcommerceController/ProductController');
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
 const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
-const {addStory,uploadSubStoryImages,getStories,deleteStory,getStoryById,updateStory} = require("../controllers/storyController");
+const {addStory,addSubStory,getStoryBySlug,getSubStoryBySlug,updateStory,updateSubStory,updateStoryStatus,updateSubStoryStatus,deleteStory} = require("../controllers/storyController");
 const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updatecommmission} = require("../controllers/SettingController");
 const { loginPartner } = require("../controllers/partnerController");
 const { createBhavyaAyojan,getBhavyaAyojan,getBhavyaAyojanByID,cancelBhavyaAyojanByID,getBhavyaAyojanByUserID } = require("../controllers/bhavyaAyojanController");
@@ -158,12 +158,14 @@ router.get('/bhajanMandal/get-videos/:bhajan_mandal_id', authenticateToken, getV
 router.get('/bhajanMandal/get-active-video/:bhajan_mandal_id',authenticateToken,getactiveVideosByBhajanMandal);
 router.get('/bhajanMandal/get-all-videos',authenticateToken,getAllBhajanMandalVideos);
 router.get('/bhajanMandal/get-all-booking/:mandaliId/:bookingstatus',authenticateToken,getBhajanMandaliBooking);
+router.get('/bhajanMandal/get-all/:mandaliId',authenticateToken,getAllBhajanMandaliBooking);
 router.post('/order/bhajan-mandali',authenticateToken,createBhanjanMandaliBooking);
 router.get('/order/bhajan-mandli/:orderId',authenticateToken,getBhajanOrder);
 router.put('/order/update-mandali-order',authenticateToken,updateMandaliOrder);
 router.put('/order/accept-reject-mandali',authenticateToken,acceptOrRejectMandaliBooking);
 router.post('/bhajan-mandali/start-bhajan',authenticateToken,startBhajanMandal);
 router.post('/bhajan-mandali/complete-bhajan',authenticateToken,completeBhajanMandal);
+router.get('/bhajan-mandali/booking-user/:userId',authenticateToken,bhajanMandaliBookingUserID);
 // Bhajan Mandal Routes end
 // Ecommerce Section 
 router.post("/product/category",authenticateToken,createCategory);
@@ -219,12 +221,16 @@ router.get("/setting/commission",authenticateToken,getCommission);
 router.put("/setting/update-commision",authenticateToken,updatecommmission);
 
 // Story Section 
-router.post("/story/add",authenticateToken,addStory);
-router.get("/story/",authenticateToken,getStories);
-router.delete("/story/:id",authenticateToken,deleteStory);
-router.post("/story/:storyId/:subStoryIndex/images",authenticateToken,uploadSubStoryImages);
-router.get("/story/:id",authenticateToken,getStoryById);
+router.post("/story/add-story",authenticateToken,addStory);
+router.post("/story/add-substory",authenticateToken,addSubStory);
+router.get("/story/get-story/:slug",authenticateToken,getStoryBySlug);
+router.get("/story/get-substory/:slug",authenticateToken,getSubStoryBySlug);
 router.put("/story/update-story/:id",authenticateToken,updateStory);
+router.put("/story/update-substory/:storyId/:subStoryId",authenticateToken,updateSubStory);
+router.put("/story/update-status/:id",authenticateToken,updateStoryStatus);
+router.put("/sub-story/update-status/:storyId/:subStoryId",authenticateToken,updateSubStoryStatus);
+router.delete("/story/delete-story/:id",authenticateToken,deleteStory);
+
 // Story Section
 // Brahman Bhoj
 

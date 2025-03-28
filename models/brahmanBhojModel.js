@@ -8,6 +8,10 @@ const brahmanBhojSchema = new mongoose.Schema({
     bhojId: {
         type:String,
     },
+    bookingStatus:{
+        type:String,
+        default:0,
+    },
     user_name:{
         type:String,   
     },

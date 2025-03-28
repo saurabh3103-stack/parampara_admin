@@ -1,10 +1,27 @@
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const streamifier = require('streamifier'); 
+const path = require('path');
+const fs = require('fs');
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 
-const storage = multer.memoryStorage();
+// Configure local storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../public/uploads/user_photo');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -21,22 +38,6 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, 
 }).single('image');
 
-const uploadToCloudinary = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: 'userImages' }, 
-      (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.secure_url); 
-        }
-      }
-    );
-    streamifier.createReadStream(buffer).pipe(stream); 
-  });
-};
-
 exports.createUser = [
   upload,
   async (req, res) => {
@@ -48,7 +49,8 @@ exports.createUser = [
       let imagePath = null;
 
       if (req.file) {
-        imagePath = await uploadToCloudinary(req.file.buffer); 
+        // Generate relative path for the image
+        imagePath = path.join('uploads', 'user_photo', path.basename(req.file.path));
       }
 
       const newUser = new User({
@@ -66,6 +68,7 @@ exports.createUser = [
     }
   }
 ];
+
 exports.getUsers = async (req, res) => {
   try {
     const users = await User.find();
@@ -74,6 +77,7 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({ message: error.message, status: 0 });
   }
 };
+
 exports.loginUser = async (req, res) => {
   try {
     const { email, password, fcm_token } = req.body; // Accept fcm_token from request body
@@ -98,7 +102,7 @@ exports.loginUser = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       status: 1,
-      data: { id: user._id, username: user.username, email: user.email, fcm_token: user.fcm_token }
+      data: { id: user._id, username: user.username, email: user.email, fcm_token: user.fcm_token,userData:user }
     });
   } catch (error) {
     res.status(500).json({ message: error.message, status: 0 });
@@ -150,8 +154,8 @@ exports.updateUser = [
   upload,
   async (req, res) => {
     try {
-      const { userId } = req.params;  // Extracting userId from params
-      const updateData = req.body;  // Extracting the rest of the data from body
+      const { userId } = req.params;
+      const updateData = req.body;
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found", status: 0 });
@@ -161,15 +165,32 @@ exports.updateUser = [
         updateData.password = await bcrypt.hash(updateData.password, saltRounds);
       }
       if (req.file) {
-        const imagePath = await uploadToCloudinary(req.file.buffer);
-        updateData.image = imagePath;
+        if (user.image) {
+          const oldImagePath = path.join(__dirname, '../public', user.image);
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        }
+        updateData.image = path.join('uploads', 'user_photo', path.basename(req.file.path));
       }
-      const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+      const updatedUser = await User.findByIdAndUpdate(
+        userId, 
+        updateData, 
+        { new: true }
+      );
       const userResponse = updatedUser.toObject();
-      delete userResponse.password; 
-      res.status(200).json({ message: "User updated successfully", status: 1, data: userResponse });
+      delete userResponse.password;
+      res.status(200).json({ 
+        message: "User updated successfully", 
+        status: 1, 
+        data: userResponse 
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message, status: 0 });
+      console.error("Update error:", error);
+      res.status(500).json({ 
+        message: error.message, 
+        status: 0 
+      });
     }
   }
 ];

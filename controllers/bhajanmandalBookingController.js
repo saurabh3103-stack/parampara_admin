@@ -4,6 +4,7 @@ const admin = require("../config/firebase");
 const User = require("../models/userModel");
 const MandaliBooking = require("../models/BhajanMandalBooking");
 const BookedUser = require("../models/bookedUserModel");
+const MandaliUser = require("../models/bhajanmandalModel");
 
 
 const generateNumericUUID = () => {
@@ -64,15 +65,15 @@ const sendNotificationToBhajanMandali = async (fcmToken, mandaliBooking) => {
     console.log("❌ No FCM token available for this Bhajan Mandali member.");
     return false;
   }
-  console.log(mandaliBooking);
+  console.log(mandaliBooking.bookingId);
   const message = {
     token: fcmToken,
     data: {
       title: "New Bhajan Mandali Booking",
-      body: 'New booking request (ID: '+ mandaliBooking+ '. Accept or reject.',
-      booking_id: mandaliBooking,
+      body: 'New booking request (ID: '+ mandaliBooking.bookingId+ '. Accept or reject.',
+      booking_id: mandaliBooking.bookingId,
       booking_type: 'bhajanMandaliBooking',
-      activity_to_open: "com.deificdigital.paramparapartners.activities.BhajanMandaliActivity",
+      booking_time: 'Schedule Date :'+mandaliBooking.schedule.date+'&nbsp;Time'+mandaliBooking.schedule.time,
       extra_data: "Some additional data",
     },
     android: {
@@ -93,12 +94,12 @@ const sendNotificationToBhajanMandali = async (fcmToken, mandaliBooking) => {
 const updateMandaliOrder = async (req, res) => {
   console.log(req.body);
   try {
-    const { bookingId, transactionId, transactionStatus, transactionDate, userLat, userLong,fcmtokken } = req.body;
+    const { bookingId, transactionId, transactionStatus, transactionDate, userLat, userLong,fcm_tokken } = req.body;
     // Validate required fields
-    if (!bookingId || !transactionId || !transactionStatus || !transactionDate || !userLat || !userLong) {
+    if (!bookingId || !transactionId || !transactionStatus || !transactionDate || !userLat || !userLong || !fcm_tokken) {
       return res.status(400).json({ message: "Missing required fields", status: 0 });
     }
-    // Update booking status and transaction details directly in the database
+    const BookingDetails = await MandaliBooking.findOne({"bookingId":bookingId});
     const updatedMandaliBooking = await MandaliBooking.findOneAndUpdate(
       { bookingId },
       {
@@ -112,7 +113,7 @@ const updateMandaliOrder = async (req, res) => {
     if (!updatedMandaliBooking) {
       return res.status(404).json({ message: "Bhajan Mandali booking not found", status: 0 });
     }
-    sendNotificationToBhajanMandali('d9__-FIoSTurmWHti0X1U3:APA91bH6KpwrRRO9DCYnbXIFWH25phsx2gm86d2aGR9iOVJrROnRTXlQYghVGzMtyTNqRc_BW4rdcGooVgh8avLDi53621bCN58WeCSFL0K2CJ3qxpDzLtI', bookingId);
+    sendNotificationToBhajanMandali(fcm_tokken, BookingDetails);
     res.status(200).json({ message: "Bhajan Mandali Booking Confirmed", status: 1 });
   } catch (error) {
     console.error("❌ Error updating Bhajan Mandali booking:", error.message);

@@ -40,7 +40,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage: storage,
-    fileFilter: fileFilter,
+    // fileFilter: fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 }).single('bhajan_image');
 
@@ -164,13 +164,12 @@ exports.updateBhajanStatus = async (req, res) => {
 exports.updateBhajan = [
     upload,
     async (req, res) => {
-        console.log(req.body);
         try {
             const {
                 bhajan_name, slug_url, bhajan_category, bhajan_price, bhajan_member, exp_year,
                 short_discription, long_discription, address, city, location, state, country, pin_code, area,fcm_tokken,owner_name,owner_email,owner_phone
             } = req.body;
-
+            
             const userId = req.params.id;
 
             let bhajan = await BhajanMandal.findOne({ userID: userId });
@@ -191,6 +190,7 @@ exports.updateBhajan = [
                     short_discription, long_discription, bhajan_image,
                     bhajan_owner: { owner_name:owner_name, owner_email:owner_email, owner_phone:owner_phone, fcm_tokken:fcm_tokken },
                     mandali_address: { address, city, location, state, country, pin_code, area },
+                    profile_status:1,
                     updated_at: Date.now() // Ensure updated_at is refreshed
                 },
                 { new: true }
@@ -321,9 +321,9 @@ exports.bhajanMandaliBookingUser = async(req,res)=>{
     try{
         const mandaliBooking = await MandaliBooking.find({"userDetails.userId":userId,bookingStatus:bookingstatus});
         if(!mandaliBooking){
-          return res.status(404).json({message:"No Pooja Booking Found",status:0});
+          return res.status(404).json({message:"No Bhajan Booking Found",status:0});
         }
-        return res.status(200).json({message:"Pooja Booking Details",status:1,data:mandaliBooking});
+        return res.status(200).json({message:"Bhajan Booking Details",status:1,data:mandaliBooking});
     }
     catch(error){
         res.status(500).json({message:error.message,status:0});
@@ -334,12 +334,39 @@ exports.getBhajanMandaliBooking =async(req,res)=>{
   try{
     const {mandaliId}= req.params;
     const {bookingstatus} = req.params;
-    const poojaBooking = await MandaliBooking.findOne({"bookingDetails.mandaliId": mandaliId,bookingStatus:bookingstatus });
+    const poojaBooking = await MandaliBooking.find({"bookingDetails.mandaliId": mandaliId,bookingStatus:bookingstatus });
     if (!poojaBooking) {
-      return res.status(404).json({ message: "No Pooja Booking Found", status: 0 });
+      return res.status(404).json({ message: "No Bhajan Booking Found", status: 0 });
     }
-    return res.status(200).json({ message: "Pooja Booking Details", status: 1, data: poojaBooking });
+    return res.status(200).json({ message: "Bhajan Booking Details", status: 1, data: poojaBooking });
   }catch(error){
     res.status(500).json({message:error.message,status:0});
   }
+}
+
+exports.getAllBhajanMandaliBooking =async(req,res)=>{
+    try{
+      const {mandaliId}= req.params;
+      const poojaBooking = await MandaliBooking.findOne({"bookingDetails.mandaliId": mandaliId });
+      if (!poojaBooking) {
+        return res.status(404).json({ message: "No Bhajan Booking Found", status: 0 });
+      }
+      return res.status(200).json({ message: "Bhajan Booking Details", status: 1, data: poojaBooking });
+    }catch(error){
+      res.status(500).json({message:error.message,status:0});
+    }
+  }
+  
+exports.bhajanMandaliBookingUserID = async(req,res)=>{
+    try{
+        const {userId} = req.params;
+        const poojaBooking = await MandaliBooking.findOne({"userDetails.userId": userId });
+        if (!poojaBooking) {
+          return res.status(404).json({ message: "No Bhajan Booking Found", status: 0 });
+        }
+        return res.status(200).json({ message: "Bhajan Booking Details", status: 1, data: poojaBooking });    
+    }catch(error){
+        res.status(500).json({message:error.message,status:0});
+    }
+
 }

@@ -12,6 +12,7 @@ const bhavyaAyojanSchema = new mongoose.Schema({
     guest_count: { type: Number, required: true },
     venue: { type: String, required: true },
     address: {
+        home:{type:String,required:true},
         street: { type: String, required: true },
         city: { type: String, required: true },
         state: { type: String, required: true },

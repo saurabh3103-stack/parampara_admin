@@ -29,6 +29,7 @@ exports.createBrahmanBhoj = async (req,res) => {
         const newBrahmanBhoj = new BrahmanBhoj({
             userId,
             bhojId : "BRAHMANBHOJ"+generateNumericUUID(),
+            bookingStatus : 1,
             user_name,
             email,
             phone,

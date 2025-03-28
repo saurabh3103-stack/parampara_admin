@@ -29,7 +29,8 @@ const bhajanMandalSchema = new mongoose.Schema({
         owner_phone: { type: String, required: true },
         fcm_tokken : {type:String,default:null},
         owner_password: { type: String, required: true }
-    }
+    },
+    profile_status:{type:String,default:0},
 });
 
 
