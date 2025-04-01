@@ -359,9 +359,7 @@ const sendNotificationToUser = async (userFcmToken, bookingId) => {
 const getOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    // Attempt to find the order in the PoojaBooking collection
     let order = await PoojaBooking.findOne({ bookingId: orderId });
-    // If not found in PoojaBooking, search in the MandaliBooking collection
     if (!order) {
       order = await MandaliBooking.findOne({ bookingId: orderId });
     }

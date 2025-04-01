@@ -74,6 +74,7 @@ exports.ecomgetCart = async (req, res) => {
 exports.ecomremoveCartItem = async(req,res)=>{
     try {
         const { user_id, product_id } = req.params;
+        console.log(req.params);
         await Cart.findOneAndDelete({ user_id, product_id });
     
         res.status(200).json({ success: true, message: "Product removed from cart" });
@@ -83,12 +84,13 @@ exports.ecomremoveCartItem = async(req,res)=>{
 }
 
 exports.ecomclearCart = async (req, res) => {
-    try {
-      const { user_id } = req.params;
-      await Cart.deleteMany({ user_id });
-  
-      res.status(200).json({ success: true, message: "Cart cleared" });
-    } catch (error) {
-      res.status(500).json({ success: false, message: "Error clearing cart", error: error.message });
-    }
-  };
+  try {
+    const { user_id } = req.params;
+    console.log("User ID:", user_id);
+
+    await Cart.deleteMany({ "user_id":user_id });
+    res.status(200).json({ success: true, message: "Cart cleared" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error clearing cart", error: error.message });
+  }
+};

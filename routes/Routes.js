@@ -29,8 +29,8 @@ const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,upda
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
 const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,addSubStory,getStoryBySlug,getSubStoryBySlug,updateStory,updateSubStory,updateStoryStatus,updateSubStoryStatus,deleteStory} = require("../controllers/storyController");
-const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updatecommmission} = require("../controllers/SettingController");
-const { loginPartner } = require("../controllers/partnerController");
+const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updateCommission} = require("../controllers/SettingController");
+const { loginPartner,registerPartner } = require("../controllers/partnerController");
 const { createBhavyaAyojan,getBhavyaAyojan,getBhavyaAyojanByID,cancelBhavyaAyojanByID,getBhavyaAyojanByUserID } = require("../controllers/bhavyaAyojanController");
 // Define other routes (existing ones)
 
@@ -54,7 +54,7 @@ router.get('/location/', authenticateToken, getlocation);
 // Partner Login
 
 router.post('/partner/login',authenticateToken,loginPartner);
-
+router.post('/partner/register',authenticateToken,registerPartner);
 // Partner Login
 
 // Start Pooja Routes
@@ -190,7 +190,7 @@ router.get("/product/product-details/:id",authenticateToken,getProducrBySlug);
 router.post("/product/add-cart", authenticateToken,ecomaddToCart);
 router.get("/product/cart/:user_id",authenticateToken,ecomgetCart);
 router.delete("/product/cart/:user_id/:product_id", ecomremoveCartItem);
-router.delete("/product/cart/clear/:user_id", ecomclearCart);
+router.delete("/product/clear-cart/:user_id", ecomclearCart);
 router.post("/e-store/create-order",authenticateToken,createOrder);
 router.put("/e-store/update-order/:combinedPaymentId",authenticateToken,updateOrderPayment);
 router.get("/e-store/orders/:orderId",authenticateToken,geteStoreOrder);
@@ -218,7 +218,7 @@ router.get("/setting/pandit-range",authenticateToken,getPanditRange);
 router.put("/setting/update-range",authenticateToken,updatePanditRange);
 router.post("/setting/create-commission",authenticateToken,createCommision);
 router.get("/setting/commission",authenticateToken,getCommission);
-router.put("/setting/update-commision",authenticateToken,updatecommmission);
+router.put("/setting/update-commision",authenticateToken,updateCommission);
 
 // Story Section 
 router.post("/story/add-story",authenticateToken,addStory);

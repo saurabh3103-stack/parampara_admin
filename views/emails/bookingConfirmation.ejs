@@ -1,0 +1,59 @@
+<!-- emailTemplates/bookingConfirmation.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f1e6; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .footer { margin-top: 20px; font-size: 12px; text-align: center; color: #777; }
+        .booking-details { margin: 20px 0; }
+        .detail-row { display: flex; margin-bottom: 10px; }
+        .detail-label { font-weight: bold; width: 150px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Bhajan Mandali Booking is Confirmed</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear <%= user.username %>,</p>
+            <p>Thank you for booking with Vaidic Parampara. Your Bhajan Mandali session has been confirmed.</p>
+            
+            <div class="booking-details">
+                <h3>Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span><%= booking.bookingId %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Mandali Name:</span>
+                    <span><%= booking.bookingDetails.mandaliName %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Date:</span>
+                    <span><%= new Date(booking.schedule.date).toLocaleDateString() %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Time:</span>
+                    <span><%= booking.schedule.time %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Amount:</span>
+                    <span>₹<%= booking.paymentDetails.amount %></span>
+                </div>
+            </div>
+            
+            <p>We look forward to serving you in your spiritual journey.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Vaidic Parampara - Preserving Ancient Wisdom</p>
+            <p>If you have any questions, please contact us at support@vaidicparampara.com</p>
+        </div>
+    </div>
+</body>
+</html>

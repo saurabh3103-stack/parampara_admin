@@ -1,0 +1,36 @@
+<!-- emailTemplates/bookingAccepted.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* Similar styling as confirmation email */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Bhajan Mandali Booking Has Been Accepted</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear <%= user.username %>,</p>
+            <p>We're pleased to inform you that your Bhajan Mandali booking has been accepted by the mandali.</p>
+            
+            <div class="booking-details">
+                <h3>Booking Details</h3>
+                <!-- Similar details as confirmation email -->
+                <div class="detail-row">
+                    <span class="detail-label">OTP for Verification:</span>
+                    <span style="font-weight: bold; color: #d35400;"><%= booking.otp %></span>
+                </div>
+            </div>
+            
+            <p>Please share this OTP with the mandali when they arrive for verification.</p>
+        </div>
+        
+        <div class="footer">
+            <!-- Same footer as confirmation email -->
+        </div>
+    </div>
+</body>
+</html>

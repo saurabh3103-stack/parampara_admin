@@ -1,0 +1,46 @@
+<!-- emailTemplates/bookingCompleted.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* Similar styling */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Bhajan Mandali Session Has Been Completed</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear <%= user.username %>,</p>
+            <p>Your Bhajan Mandali session has been successfully completed.</p>
+            
+            <div class="booking-details">
+                <h3>Session Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Start Time:</span>
+                    <span><%= booking.schedule.bhajanStartTime %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">End Time:</span>
+                    <span><%= booking.schedule.bhajanEndTime %></span>
+                </div>
+                <!-- Other details -->
+            </div>
+            
+            <p>Thank you for choosing Vaidic Parampara. We hope this session brought you spiritual satisfaction.</p>
+            
+            <p style="margin-top: 20px;">
+                <a href="<%= process.env.FRONTEND_URL %>/feedback" style="background-color: #e67e22; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                    Share Your Feedback
+                </a>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <!-- Footer -->
+        </div>
+    </div>
+</body>
+</html>
