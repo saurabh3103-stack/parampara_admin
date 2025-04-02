@@ -1,71 +1,34 @@
 const { v4: uuidv4 } = require("uuid");
 const PoojaBooking = require("../models/PoojaBooking");
-const DeliveryAddress = require("../models/DeliveryAddress");
-const admin = require("../config/firebase");
 const pandit = require("../models/panditModel");
 const User = require("../models/userModel");
-const MandaliBooking = require("../models/BhajanMandalBooking");
 const PanditCategory = require('../models/panditCategoryModel');
 const MissedPoojaBooking = require('../models/missedPoojaBookingModel');
 const BookedUser = require("../models/bookedUserModel");
+const {
+  sendPanditAssignmentNotification,
+  sendUserBookingNotification,
+  sendPoojaStartNotification,
+  sendPoojaCompleteNotification,
+  sendCancelNotification,
+} = require("../utils/poojaBookingNotification");
+const { sendEmail } = require("../utils/emailUtils");
 
 const generateNumericUUID = () => {
-  const uuid = uuidv4().replace(/-/g, ''); // Remove hyphens
+  const uuid = uuidv4().replace(/-/g, '');
   const numericId = uuid.split('')
-      .map(char => char.charCodeAt(0) % 10) 
-      .join('')
-      .slice(0, 4);
+    .map(char => char.charCodeAt(0) % 10)
+    .join('')
+    .slice(0, 4);
   const now = new Date();
-  const timestamp = now.toISOString().replace(/[-:.TZ]/g, '').slice(8, 14); // Extract HHMMSS from ISO format
+  const timestamp = now.toISOString().replace(/[-:.TZ]/g, '').slice(8, 14);
   return `${timestamp}`;
 };
 
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 999999);
+  return Math.floor(100000 + Math.random() * 900000);
 }
-// Create Pooja Booking
 
-const createPoojaBooking = async (req, res) => {
-  console.log(req.body);
-  try {
-    const { poojaId,poojaName,poojaType,isSamagriIncluded,date,time,userId,
-      username,contactNumber,email,amount,quantity,} = req.body;
-    const newPoojaBooking = new PoojaBooking({
-      bookingId: 'POOJA'+generateNumericUUID(),
-      bookingDetails: {poojaId,poojaName,Type:"Pooja",isSamagriIncluded,},
-      userDetails: {userId,username,contactNumber,email,},
-      schedule: {date,time,},
-      paymentDetails: {amount,quantity,},
-    });
-    await newPoojaBooking.save();
-    console.log(newPoojaBooking);
-    res.status(201).json({message: "Pooja booking created successfully",poojaBooking: newPoojaBooking,status: 1,});
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({message: "Error creating Pooja booking",error: error.message,status: 0,
-    });
-  }
-};
-
-
-
-const getBhajanOrder = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const order = await MandaliBooking.findOne({ bookingId: orderId });
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ message: "Error retrieving order", error: error.message });
-  }
-};
-
-
-
-// Bhajan Mandali Booking End
 const getDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radius of Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -79,531 +42,498 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in km
 };
+
+// Create Pooja Booking
+const createPoojaBooking = async (req, res) => {
+  try {
+    const { poojaId, poojaName, poojaType, isSamagriIncluded, date, time, userId,
+      username, contactNumber, email, amount, quantity } = req.body;
+    
+    const newPoojaBooking = new PoojaBooking({
+      bookingId: 'POOJA' + generateNumericUUID(),
+      bookingDetails: { poojaId, poojaName, Type: "Pooja", isSamagriIncluded },
+      userDetails: { userId, username, contactNumber, email },
+      schedule: { date, time },
+      paymentDetails: { amount, quantity },
+    });
+
+    await newPoojaBooking.save();
+    res.status(201).json({
+      message: "Pooja booking created successfully",
+      poojaBooking: newPoojaBooking,
+      status: 1,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error creating Pooja booking",
+      error: error.message,
+      status: 0,
+    });
+  }
+};
+
 // Assign Pandit 
 const assignPandit = async (poojaBooking, userLat, userLong, index) => {
   try {
     const poojaId = poojaBooking.bookingDetails.poojaId;
-    let panditCategories = await PanditCategory.find({ pooja_id: poojaId,status:1 });
+    let panditCategories = await PanditCategory.find({ pooja_id: poojaId, status: 1 });
+    
     if (!panditCategories.length) {
       return { status: 404, message: "No Pandit category found for this pooja.", accepted: false };
     }
+
     let panditIds = panditCategories.map(category => category.pandit_id);
-    let matchedPandits = await pandit.find({ _id: { $in: panditIds },'profile_status':'active'});
+    let matchedPandits = await pandit.find({ 
+      _id: { $in: panditIds },
+      'profile_status': 'active'
+    });
+
     if (!matchedPandits.length) {
-      console.log('Wait for admin approval');
       return { status: 404, message: "No matching Pandits found", accepted: false };
     }
-    matchedPandits = matchedPandits.map(pandit => ({...pandit.toObject(),
-        distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude)})).sort((a, b) => a.distance - b.distance);
-    console.log('match pandit:'+ matchedPandits.length);
-    console.log(matchedPandits);
-    console.log('index : '+index);
+
+    matchedPandits = matchedPandits.map(pandit => ({
+      ...pandit.toObject(),
+      distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude)
+    })).sort((a, b) => a.distance - b.distance);
+
     if (index >= matchedPandits.length) {
-      console.log('Wait for admin approval');
       return { status: 200, message: "No Pandit accepted the booking.", accepted: false };
     }
-    console.log(matchedPandits[index]);
-    sendNotificationToPandit(matchedPandits[index].fcm_tokken,poojaBooking,index);
-    return { status: 200, message: "Pandits assigned", accepted: true, data: matchedPandits };
+
+    const selectedPandit = matchedPandits[index];
+    
+    // Send email to pandit
+    try {
+      if (selectedPandit.email) {
+        await sendEmail(
+          selectedPandit.email,
+          `New Pooja Booking Assignment - ${poojaBooking.bookingId}`,
+          'PoojaEmail/panditAssignment',
+          {
+            bookingId: poojaBooking.bookingId,
+            poojaName: poojaBooking.bookingDetails.poojaName,
+            date: poojaBooking.schedule.date,
+            time: poojaBooking.schedule.time,
+            userName: poojaBooking.userDetails.username,
+            userPhone: poojaBooking.userDetails.contactNumber
+          }
+        );
+        console.log('email send');
+      }
+    } catch (emailError) {
+      console.error('Failed to send pandit assignment email:', emailError);
+    }
+
+    await sendPanditAssignmentNotification(
+      selectedPandit.fcm_tokken,
+      poojaBooking,
+      index
+    );
+
+    return { 
+      status: 200, 
+      message: "Pandits assigned", 
+      accepted: true, 
+      data: matchedPandits 
+    };
   } catch (error) {
-    console.error("Error in assignPandit:", error);
-    return { status: 500, message: "Internal Server Error", accepted: false };
+    return { 
+      status: 500, 
+      message: "Internal Server Error", 
+      accepted: false 
+    };
   }
 };
 
-
-// Send notification to Pandit
-const sendNotificationToPandit = async (fcmToken, poojaBooking,index) => {
-  const  indexval = index
-  const  newindex = indexval.toString();
-  if (!fcmToken) {
-    console.log("❌ No FCM token available for this Pandit.");
-    return false;
-  }
-  const currentISTTime = new Date(new Date().getTime() + (330 - 1) * 60 * 1000) // Adjust for IST (UTC+5:30) and subtract 2 minutes
-  .toISOString()
-  .replace("T", " ")
-  .split(".")[0];
-    const message = {
-    token: fcmToken,
-    data: {
-      title: "New Pooja Booking",
-      body: `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`,
-      booking_id: poojaBooking.bookingId.toString(),
-      booking_type: 'panditBooking',
-      booking_time:poojaBooking.schedule.date+"&nbsp"+poojaBooking.schedule.time,
-      sent_time:currentISTTime,
-      extra_data: "Some additional data",
-      index:newindex,
-    },
-    android: {
-      priority: "high"
-    },
-  };
-  console.log("Current time "+currentISTTime);
-
+// Update Pooja Booking and Start Assigning Pandit
+const updatePoojaBooking = async (req, res) => {
   try {
-    await admin.messaging().send(message);
-    console.log("Current time "+currentISTTime);
-    console.log(`📩 Notification sent to Pandit with token: ${fcmToken}`);
-    return true;
+    const { bookingId, transactionId, transactionStatus, transactionDate, userLat, userLong } = req.body;
+    
+    if (!bookingId || !transactionId || !transactionStatus || !userLat || !userLong) {
+      return res.status(400).json({ 
+        message: "Missing required fields", 
+        status: 0 
+      });
+    }
+
+    const poojaBooking = await PoojaBooking.findOne({ bookingId });
+    if (!poojaBooking) {
+      return res.status(404).json({ 
+        message: "Pooja booking not found", 
+        status: 0 
+      });
+    }
+
+    poojaBooking.bookingStatus = 1; // Mark as confirmed
+    poojaBooking.transactionDetails = { 
+      transactionId, 
+      transactionStatus, 
+      transactionDate 
+    };
+    
+    await poojaBooking.save();
+
+    // Send order confirmation email
+    try {
+      const user = await User.findById(poojaBooking.userDetails.userId);
+      if (user && user.email) {
+        await sendEmail(
+          user.email,
+          `Your Pooja Booking Confirmation - ${poojaBooking.bookingId}`,
+          'PoojaEmail/orderConfirmation',
+          {
+            bookingId: poojaBooking.bookingId,
+            poojaName: poojaBooking.bookingDetails.poojaName,
+            date: poojaBooking.schedule.date,
+            time: poojaBooking.schedule.time,
+            amount: poojaBooking.paymentDetails.amount,
+            userName: user.name || poojaBooking.userDetails.username
+          }
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+    }
+
+    assignPandit(poojaBooking, userLat, userLong, 0);
+    
+    res.status(200).json({
+      message: "Booking Confirm", 
+      status: 1
+    });
   } catch (error) {
-    console.error("❌ Error sending notification:", error.message, 0);
-    return false;
+    res.status(500).json({ 
+      message: "Error updating Pooja booking", 
+      error: error.message, 
+      status: 0 
+    });
   }
 };
 
 // Accept or Reject Booking
 const acceptRejectBooking = async (req, res) => {
   try {
-      const { panditId, bookingId, status, userLat, userLong, isAutomatic, user_type } = req.body;
-      if (!panditId || !bookingId || status === undefined) {
-        return res.status(400).json({ message: "Missing required fields", status: 0 });
-      }
-      const poojaBooking = await PoojaBooking.findOne({ bookingId });
-      if (!poojaBooking) {
-        return res.status(404).json({ message: "Pooja booking not found", status: 0 });
-      }
-      if (status === 1) { 
-          poojaBooking.panditId = panditId;
-          poojaBooking.bookingStatus = 2; 
-          poojaBooking.otp=generateOTP();
-          await poojaBooking.save();
-          const bookedUser = new BookedUser({
-              userId: poojaBooking.userDetails.userId,
-              partnerId: panditId,
-              user_type: "pandit", 
-              product_type: {
-                product_id: poojaBooking.bookingDetails.poojaId,
-                product_name: poojaBooking.bookingDetails.poojaName,
-              },
-              booking_date: poojaBooking.schedule.date,
-              booking_time: poojaBooking.schedule.time,
-              status: 1
-          });
-          await bookedUser.save();
-          const user = await User.findOne({ _id: poojaBooking.userDetails.userId });
-          if (user && user.fcm_tokken) {
-            await sendNotificationToUser(user.fcm_tokken, bookingId);
-          }
-          return res.status(200).json({ message: "Booking accepted and saved.", status: 1 });
-      } else { 
-          const missedBooking = new MissedPoojaBooking({
-              pandit_id: panditId,
-              isAutomatic: isAutomatic,
-              bookingDetails: {
-                  poojaId: poojaBooking.bookingDetails.poojaId,
-                  poojaName: poojaBooking.bookingDetails.poojaName,
-                  Type: poojaBooking.bookingDetails.Type,
-                  isSamagriIncluded: poojaBooking.bookingDetails.isSamagriIncluded,
-              },
-              schedule: {
-                  date: poojaBooking.schedule.date,
-                  time: poojaBooking.schedule.time
-              },
-          });
-          await missedBooking.save();
-          assignPandit(poojaBooking, userLat, userLong, req.body.index + 1);
-          return res.status(200).json({ message: "Booking sent to a new Pandit.", status: 1 });
-      }
-  } catch (error) {
-      console.error("❌ Error processing accept/reject booking:", error.message);
-      res.status(500).json({ message: "Error processing booking", error: error.message, status: 0 });
-  }
-};
-
-
-// Update Pooja Booking and Start Assigning Pandit
-const updatePoojaBooking = async (req, res) => {
-  console.log(req.body);
-  try {
-    const { bookingId, transactionId, transactionStatus, transactionDate, userLat, userLong } = req.body;
-    if (!bookingId || !transactionId || !transactionStatus  || !userLat || !userLong) {
-      return res.status(400).json({ message: "Missing required fields", status: 0 });
-    }
-    const poojaBooking = await PoojaBooking.findOne({ bookingId });
-    if (!poojaBooking) {
-      return res.status(404).json({ message: "Pooja booking not found", status: 0 });
-    }
-    poojaBooking.bookingStatus = 1; // Mark as confirmed
-    poojaBooking.transactionDetails = { transactionId, transactionStatus, transactionDate };
-    await poojaBooking.save();
-    // Start finding an available Pandit
-    assignPandit(poojaBooking, userLat, userLong, 0);
-    res.status(200).json({message: "Booking Confirm", status: 1})
-  } catch (error) {
-    console.error("❌ Error updating Pooja booking:", error.message);
-    res.status(500).json({ message: "Error updating Pooja booking", error: error.message, status: 0 });
-  }
-};
-
-
-
-const sendNotificationToBhajanMandali = async (fcmToken, mandaliBooking) => {
-  if (!fcmToken) {
-    console.log("❌ No FCM token available for this Bhajan Mandali member.");
-    return false;
-  }
-  console.log(mandaliBooking);
-  const message = {
-    token: fcmToken,
-    data: {
-      title: "New Bhajan Mandali Booking",
-      body: 'New booking request (ID: '+ mandaliBooking+ '. Accept or reject.',
-      booking_id: mandaliBooking,
-      booking_type: 'bhajanMandaliBooking',
-      activity_to_open: "com.deificdigital.paramparapartners.activities.BhajanMandaliActivity",
-      extra_data: "Some additional data",
-    },
-    android: {
-      priority: "high"
-    },
-  };
-
-  try {
-    await admin.messaging().send(message);
-    console.log(`📩 Notification sent to Bhajan Mandali with token: ${fcmToken}`);
-    return true;
-  } catch (error) {
-    console.error("❌ Error sending notification to Bhajan Mandali:", error.message);
-    return false;
-  }
-};
-
-const acceptOrRejectMandaliBooking = async (req, res) => {
-  try {
-    const { bookingId, bookingStatus, partnerId, user_type } = req.body;
-    if (!bookingId || !partnerId || (bookingStatus !== 1 && bookingStatus !== 2)) {
-      return res.status(400).json({ message: "Missing or invalid required fields", status: 0 });
-    }
-    const updatedBooking = await MandaliBooking.findOneAndUpdate(
-      { bookingId },
-      { $set: { bookingStatus } },
-      { new: true }
-    );
-    if (!updatedBooking) {
-      return res.status(404).json({ message: "Booking not found", status: 0 });
-    }
-    const mandaliData = await MandaliBooking.findOne({ bookingId });
-    if (!mandaliData || !mandaliData.userDetails) {
-      return res.status(404).json({ message: "Booking details not found", status: 0 });
-    }
-    const userId = mandaliData.userDetails.userId;
-    const user = await User.findById(userId);
-    if (bookingStatus === 1) {
-      mandaliData.bookingStatus=2;
-      mandaliData.otp=generateOTP();
-      await mandaliData.save();
-      const bookedUser = new BookedUser({
-        userId: userId,
-        partnerId: mandaliData.bookingDetails.mandaliId,
-        user_type: "mandali",
-        product_type: {
-          product_id: mandaliData.bookingDetails.mandaliId,
-          product_name: mandaliData.bookingDetails.mandaliName,
-        },
-        booking_date: mandaliData.schedule.date,
-        booking_time: mandaliData.schedule.time,
-        status: "booked",
+    const { panditId, bookingId, status, userLat, userLong, isAutomatic, user_type } = req.body;
+    
+    if (!panditId || !bookingId || status === undefined) {
+      return res.status(400).json({ 
+        message: "Missing required fields", 
+        status: 0 
       });
-      await bookedUser.save();
     }
-    if (user && user.fcm_tokken) {
-      const statusText = bookingStatus === 1 ? "accepted" : "rejected";
-      await sendNotificationToUser(user.fcm_tokken, bookingId, statusText);
+
+    const poojaBooking = await PoojaBooking.findOne({ "bookingId": bookingId });
+    console.log(poojaBooking);
+    if (!poojaBooking) {
+      return res.status(404).json({ 
+        message: "Pooja booking not found", 
+        status: 0 
+      });
     }
-    const message =
-      bookingStatus === 1 ? "Booking accepted and saved successfully" : "Booking rejected successfully";
-    res.status(200).json({ message, status: 1 });
-  } catch (error) {
-    console.error("❌ Error processing booking:", error.message);
-    res.status(500).json({ message: "Error processing booking", error: error.message, status: 0 });
-  }
-};
 
-// SEND NOTIFICATION TO USER 
+    if (status === 1) { 
+      // Get pandit details for email
+      const panditDetails = await pandit.findById(panditId);
+      
+      poojaBooking.panditId = panditId;
+      poojaBooking.bookingStatus = 2; 
+      poojaBooking.otp = generateOTP();
+      await poojaBooking.save();
 
-const sendNotificationToUser = async (userFcmToken, bookingId) => {
-  const message = {
-    message: {
-      token: userFcmToken,
-      notification: {
-        title: "Booking Confirmed",
-        body: `Your booking (ID: ${bookingId}) has been accepted by the Pandit.`,
-      },
-      data: {
-        booking_id: bookingId.toString(),
-        click_action: "OPEN_ACTIVITY",
-      },
-      android: {
-        priority: "high",
-        notification: {
-          sound: "default",
-          click_action: "OPEN_ACTIVITY",
-          channel_id: "notifBookingStatus",
+      const bookedUser = new BookedUser({
+        userId: poojaBooking.userDetails.userId,
+        partnerId: panditId,
+        user_type: "pandit", 
+        product_type: {
+          product_id: poojaBooking.bookingDetails.poojaId,
+          product_name: poojaBooking.bookingDetails.poojaName,
         },
-      },
-    },
-  };
+        booking_date: poojaBooking.schedule.date,
+        booking_time: poojaBooking.schedule.time,
+        status: 1
+      });
 
-  try {
-    await admin.messaging().send(message.message);
-    console.log(`📩 Notification sent to User with token: ${userFcmToken}`);
+      await bookedUser.save();
+      const user = await User.findOne({ _id: poojaBooking.userDetails.userId });
+      
+      // Send notification to user
+      if (user && user.fcm_tokken) {
+        await sendUserBookingNotification(
+          user.fcm_tokken, 
+          bookingId, 
+          1
+        );
+      }
+      if (user && user.email) {
+        await sendEmail(
+          user.email,
+          `Pandit Assigned for Your Pooja - ${poojaBooking.bookingId}`,
+          'PoojaEmail/panditAssigned',
+          {
+            bookingId: poojaBooking.bookingId,
+            poojaName: poojaBooking.bookingDetails.poojaName,
+            date: poojaBooking.schedule.date,
+            time: poojaBooking.schedule.time,
+            panditName: panditDetails?.name || "Your Pandit",
+            panditContact: panditDetails?.contactNumber || "Contact via App",
+            otp: poojaBooking.otp
+          }
+        );
+      }
+
+      // Send email to pandit about acceptance
+      if (panditDetails && panditDetails.email) {
+        await sendEmail(
+          panditDetails.email,
+          `Booking Confirmed - ${poojaBooking.bookingId}`,
+          'PoojaEmail/panditBookingConfirmed',
+          {
+            bookingId: poojaBooking.bookingId,
+            poojaName: poojaBooking.bookingDetails.poojaName,
+            date: poojaBooking.schedule.date,
+            time: poojaBooking.schedule.time,
+            userName: poojaBooking.userDetails.username,
+            userPhone: poojaBooking.userDetails.contactNumber,
+            userAddress: poojaBooking.userDetails.address || "Address in app",
+            otp: poojaBooking.otp
+          }
+        );
+      }
+
+      return res.status(200).json({ 
+        message: "Booking accepted and saved.", 
+        status: 1 
+      });
+    } else { 
+      // Get pandit details for email
+      const panditDetails = await pandit.findById(panditId);
+      
+      const missedBooking = new MissedPoojaBooking({
+        pandit_id: panditId,
+        isAutomatic: isAutomatic,
+        bookingDetails: {
+          poojaId: poojaBooking.bookingDetails.poojaId,
+          poojaName: poojaBooking.bookingDetails.poojaName,
+          Type: poojaBooking.bookingDetails.Type,
+          isSamagriIncluded: poojaBooking.bookingDetails.isSamagriIncluded,
+        },
+        schedule: {
+          date: poojaBooking.schedule.date,
+          time: poojaBooking.schedule.time
+        },
+      });
+
+      await missedBooking.save();
+      
+      // Send email to pandit about rejection (optional)
+      // if (panditDetails && panditDetails.email && !isAutomatic) {
+      //   await sendEmail(
+      //     panditDetails.email,
+      //     `Booking Declined - ${poojaBooking.bookingId}`,
+      //     'panditBookingDeclined',
+      //     {
+      //       bookingId: poojaBooking.bookingId,
+      //       poojaName: poojaBooking.bookingDetails.poojaName,
+      //       date: poojaBooking.schedule.date,
+      //       time: poojaBooking.schedule.time,
+      //       userName: poojaBooking.userDetails.username
+      //     }
+      //   );
+      // }
+
+      assignPandit(poojaBooking, userLat, userLong, req.body.index + 1);
+      
+      return res.status(200).json({ 
+        message: "Booking sent to a new Pandit.", 
+        status: 1 
+      });
+    }
   } catch (error) {
-    console.error("❌ Error sending notification to User:", error.message);
+    console.error("Error in acceptRejectBooking:", error);
+    res.status(500).json({ 
+      message: "Error processing booking", 
+      error: error.message, 
+      status: 0 
+    });
   }
 };
 
-
-// Get Product Order Details
+// Get Order Details
 const getOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    let order = await PoojaBooking.findOne({ bookingId: orderId });
-    if (!order) {
-      order = await MandaliBooking.findOne({ bookingId: orderId });
-    }
+    const order = await PoojaBooking.findOne({ bookingId: orderId });
+    
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+    
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving order", error: error.message });
+    res.status(500).json({ 
+      message: "Error retrieving order", 
+      error: error.message 
+    });
   }
 };
 
-
-
-// Add Delivery Address
-const addDeliveryAddress = async (req, res) => {
-    try {
-      // Destructuring the input from request body
-      const { OrderId, userId, DeliveryAddress: AddressDetails } = req.body;
-      console.log("Delivery Address:", JSON.stringify(req.body, null, 2));
-      if (!OrderId  || !AddressDetails || !AddressDetails.AddressLine1 || !AddressDetails.Location || !AddressDetails.City || !AddressDetails.State || !AddressDetails.PostalCode || !AddressDetails.Country) {
-        return res.status(400).json({ message: "Missing required fields in the delivery address" });
-      }
-
-      const newDelivery = new DeliveryAddress({
-        DeliveryId: uuidv4(),
-        OrderId,
-        userId,
-        DeliveryAddress: AddressDetails,
-      });
-     await newDelivery.save();
-      res.status(200).json({
-        message: "Delivery address added successfully",
-        delivery: newDelivery,
-        status:1
-      });
-    } catch (error) {
-      // Handle errors and send back error message
-      res.status(500).json({
-        message: "Error adding delivery address",
-        error: error.message,
-        status:0
-      });
-    }
-};
-  
-
-// Get Delivery Address
-const getDeliveryAddress = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const delivery = await DeliveryAddress.findOne({ OrderId: orderId });
-    if (!delivery) {
-      return res.status(200).json({ message: "Delivery address not found" });
-    }
-    res.json(delivery);
-  } catch (error) {
-    res.status(500).json({ message: "Error retrieving delivery address", error: error.message });
-  }
-};
-
+// Get All Orders
 const getAllOrders = async (req, res) => {
-    try {
-      const orders = await PoojaBooking.find(); // Fetch all orders from the database
-  
-      if (orders.length === 0) {
-        return res.status(404).json({ message: "No orders found" });
-      }
-  
-      res.json(orders); // Send all orders in the response
-    } catch (error) {
-      res.status(500).json({ message: "Error retrieving orders", error: error.message });
+  try {
+    const orders = await PoojaBooking.find();
+    if (orders.length === 0) {
+      return res.status(404).json({ message: "No orders found" });
     }
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error retrieving orders", 
+      error: error.message 
+    });
+  }
 };
 
-const getAllOrdersWithAddress = async (req, res) => {
-    try {
-      const orders = await PoojaBooking.find(); // Fetch all orders
-  
-      // For each order, find the corresponding delivery address
-      const ordersWithAddresses = await Promise.all(orders.map(async (order) => {
-        const delivery = await DeliveryAddress.findOne({ OrderId: order.OrderId });
-        return {
-          ...order.toObject(),
-          DeliveryAddress: delivery ? delivery.DeliveryAddress : null,
-        };
-      }));
-  
-      if (ordersWithAddresses.length === 0) {
-        return res.status(404).json({ message: "No orders found" });
-      }
-  
-      res.json(ordersWithAddresses); // Send orders along with delivery address
-    } catch (error) {
-      res.status(500).json({ message: "Error retrieving orders with addresses", error: error.message });
-    }
-  };
- 
+// Get Pooja Orders by User ID
 const getPoojaOrdersByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-
-        if (!userId) {
-            return res.status(400).json({ message: "User ID is required", status: 0 });
-        }
-
-        // Fetch orders by userId
-        const userOrders = await PoojaBooking.find({ "userDetails.userId": userId });
-
-        if (!userOrders || userOrders.length === 0) {
-            return res.status(200).json({ message: "No orders found for this user", status: 0 });
-        }
-
-        res.status(200).json({
-            message: "User orders retrieved successfully",
-            orders: userOrders,
-            status: 1,
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Error retrieving user orders", error: error.message, status: 0 });
-    }
-};
-  
-const getDeliveryAddressByUSerID = async (req, res) => {
   try {
     const { userId } = req.params;
+    
     if (!userId) {
-      return res.status(400).json({ message: "User Id is Required", status: 0 });
+      return res.status(400).json({ 
+        message: "User ID is required", 
+        status: 0 
+      });
     }
 
-    const userDelivery = await DeliveryAddress.find({ userId: userId });
-
-    if (!userDelivery || userDelivery.length === 0) {
-      return res.status(200).json({ message: "No Delivery Address Found", status: 0 });
+    const userOrders = await PoojaBooking.find({ "userDetails.userId": userId });
+    if (!userOrders || userOrders.length === 0) {
+      return res.status(200).json({ 
+        message: "No orders found for this user", 
+        status: 0 
+      });
     }
 
-    // Rearranging "Landmark" and "Location" to the last in DeliveryAddress
-    const formattedDelivery = userDelivery.map((delivery) => {
-      const { Landmark, Location, ...rest } = delivery.DeliveryAddress;
-      return {
-        ...delivery.toObject(),
-        DeliveryAddress: {
-          ...rest,
-          Landmark, // Placing at the end
-          Location, // Placing at the end
-        },
-      };
+    res.status(200).json({
+      message: "User orders retrieved successfully",
+      orders: userOrders,
+      status: 1,
     });
-
-    res.status(200).json({ message: "Delivery Address Found", data: formattedDelivery, status: 1 });
   } catch (error) {
-    res.status(500).json({ message: "Error in Retrieving Delivery Data", error: error.message, status: 0 });
+    res.status(500).json({ 
+      message: "Error retrieving user orders", 
+      error: error.message, 
+      status: 0 
+    });
   }
 };
 
-
-
-// Cancel pooja booking Api by User 
-
+// Cancel Pooja Booking
 const cancelPoojaBooking = async (req, res) => {
   try {
-    const { bookingId,type,id } = req.body;
+    const { bookingId, id } = req.body;
+    
     if (!bookingId && !id) {
-      return res.status(400).json({ message: "Enter Required Field", status: 0 });
+      return res.status(400).json({ 
+        message: "Enter Required Field", 
+        status: 0 
+      });
     }
-    const poojaBooking = await PoojaBooking.findOne({ "bookingId":bookingId,"userDetails.userId":id });
+
+    const poojaBooking = await PoojaBooking.findOne({ 
+      "bookingId": bookingId,
+      "userDetails.userId": id 
+    });
+    
     if (!poojaBooking) {
-      return res.status(404).json({ message: "Pooja booking not found", status: 0 });
+      return res.status(404).json({ 
+        message: "Pooja booking not found", 
+        status: 0 
+      });
     }
-    if (!poojaBooking.panditId) {
-      console.log("⚠️ No Pandit assigned for this booking.");
-    }
+
     let fcmToken = null;
+    let panditDetails = null;
     if (poojaBooking.panditId) {
-      const panditDetails = await pandit.findOne({ _id: poojaBooking.panditId });      
+      panditDetails = await pandit.findOne({ _id: poojaBooking.panditId });
       if (panditDetails) {
         fcmToken = panditDetails.fcm_tokken;
-        console.log(`Pandit's FCM Token: ${fcmToken}`);
-      } else {
-        console.log("⚠️ Pandit details not found.");
       }
     }
+
     poojaBooking.bookingStatus = 4;
     await poojaBooking.save();
+
     if (fcmToken) {
-      await sendCancelNotificationToPandit(fcmToken, poojaBooking, "cancel");
-    } else {
-      console.log("⚠️ No FCM token available, skipping notification.");
+      await sendCancelNotification(fcmToken, poojaBooking.bookingId);
     }
-    res.status(200).json({ message: "Booking Canceled", status: 1});
+
+    // Send cancellation emails
+    try {
+      const user = await User.findById(poojaBooking.userDetails.userId);
+      
+      // Email to user
+      if (user && user.email) {
+        await sendEmail(
+          user.email,
+          `Pooja Booking Cancelled - ${poojaBooking.bookingId}`,
+          'PoojaEmail/bookingCancelled',
+          {
+            bookingId: poojaBooking.bookingId,
+            poojaName: poojaBooking.bookingDetails.poojaName,
+            cancellationTime: new Date().toLocaleString()
+          }
+        );
+      }
+
+      // Email to pandit if assigned
+      if (panditDetails && panditDetails.email) {
+        await sendEmail(
+          panditDetails.email,
+          `Pooja Booking Cancelled - ${poojaBooking.bookingId}`,
+          'PoojaEmail/panditBookingCancelled',
+          {
+            bookingId: poojaBooking.bookingId,
+            poojaName: poojaBooking.bookingDetails.poojaName,
+            userName: poojaBooking.userDetails.username,
+            userPhone: poojaBooking.userDetails.contactNumber,
+            cancellationTime: new Date().toLocaleString()
+          }
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send cancellation emails:', emailError);
+    }
+
+    res.status(200).json({ 
+      message: "Booking Canceled", 
+      status: 1
+    });
   } catch (error) {
-    console.error("❌ Error canceling Pooja booking:", error.message);
-    res.status(500).json({ message: "Error canceling Pooja booking", error: error.message, status: 0 });
+    res.status(500).json({ 
+      message: "Error canceling Pooja booking", 
+      error: error.message, 
+      status: 0 
+    });
   }
 };
 
-
-const sendCancelNotificationToPandit = async (fcmToken, poojaBooking, actionType) => {
-  if (!fcmToken) {
-    console.log("❌ No FCM token available for this Pandit.");
-    return false;
-  }
-  const currentISTTime = new Date(new Date().getTime() + (330 - 1) * 60 * 1000) // Adjust for IST (UTC+5:30) and subtract 2 minutes
-    .toISOString()
-    .replace("T", " ")
-    .split(".")[0];
-
-  const title = actionType === "cancel" ? "Pooja Booking Canceled" : "New Pooja Booking";
-  const body = actionType === "cancel" 
-    ? `Booking (ID: ${poojaBooking.bookingId}) has been canceled.` 
-    : `New booking request (ID: ${poojaBooking.bookingId}). Accept or reject.`;
-  const message = {
-    token: fcmToken,
-    data: {
-      title,
-      body,
-      booking_id: poojaBooking.bookingId.toString(),
-      booking_type: "panditBooking",
-      sent_time: currentISTTime,
-    },
-    android: { priority: "high" },
-  };
-
-  try {
-    await admin.messaging().send(message);
-    console.log(`📩 Notification sent to Pandit for ${actionType} with token: ${fcmToken}`);
-    return true;
-  } catch (error) {
-    console.error("❌ Error sending notification:", error.message);
-    return false;
-  }
-};
-
+// Pooja Start
 const poojaStart = async (req, res) => {
   try {
     const { bookingId, panditId } = req.body;
+    
     if (!bookingId || !panditId) {
       return res.status(400).json({ 
         message: "Booking ID and Pandit ID are required",
         status: 0 
       });
     }
+
     const now = new Date();
-    const timeString = now.toTimeString().split(" ")[0]; // Extract HH:MM:SS
+    const timeString = now.toTimeString().split(" ")[0];
+    
     const updatedBooking = await PoojaBooking.findOneAndUpdate(
       { 
         bookingId: bookingId,
@@ -617,66 +547,67 @@ const poojaStart = async (req, res) => {
       },
       { new: true } 
     );
+
     if (!updatedBooking) {
       return res.status(200).json({ 
         message: "Booking not found or pandit not assigned to this booking",
         status: 0 
       });
     }
+
     const user = await User.findOne({ _id: updatedBooking.userDetails.userId });
     if (user && user.fcm_tokken) {
-      await sendPoojaStartNotificationToUser(
+      await sendPoojaStartNotification(
         user.fcm_tokken, 
         updatedBooking.bookingId
       );
     }
-    res.status(200).json({ message: "Pooja started successfully",booking: updatedBooking,status: 1});
+
+    // Send pooja start email to user
+    try {
+      if (user && user.email) {
+        await sendEmail(
+          user.email,
+          `Your Pooja Has Started - ${updatedBooking.bookingId}`,
+          'PoojaEmail/poojaStarted',
+          {
+            bookingId: updatedBooking.bookingId,
+            poojaName: updatedBooking.bookingDetails.poojaName,
+            startTime: timeString,
+            panditName: updatedBooking.panditId.name || "Your Pandit"
+          }
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send pooja start email:', emailError);
+    }
+
+    res.status(200).json({ 
+      message: "Pooja started successfully",
+      booking: updatedBooking,
+      status: 1
+    });
   } catch (error) {
-    console.error("❌ Error starting pooja:", error.message);
-    res.status(500).json({ message: "Error starting pooja",error: error.message,status: 0 });
+    res.status(500).json({ 
+      message: "Error starting pooja",
+      error: error.message,
+      status: 0 
+    });
   }
 };
 
-
-
-// Helper function to send notification to user
-const sendPoojaStartNotificationToUser = async (userFcmToken, bookingId) => {
-  const message = {
-    token: userFcmToken,
-    data: {
-      title: "Pooja Started",
-      body: `The pandit has started your pooja (Booking ID: ${bookingId})`,
-      booking_id: bookingId.toString(),
-      booking_type: "poojaStarted",
-    },
-    android: {
-      priority: "high",
-      notification: {
-        sound: "default",
-        channel_id: "poojaStatusUpdates",
-      },
-    },
-  };
-
-  try {
-    await admin.messaging().send(message);
-    console.log(`📩 Pooja start notification sent to user for booking ${bookingId}`);
-  } catch (error) {
-    console.error("❌ Error sending pooja start notification:", error.message);
-  }
-};
-
+// Pooja Complete
 const poojaComplete = async (req, res) => {
   try {
     const { bookingId, panditId, otp } = req.body;
 
-    // Validate required fields
     if (!bookingId || !panditId || !otp) {
-      return res.status(200).json({
+      return res.status(400).json({
         message: "Booking ID, Pandit ID and OTP are required",
         status: 0
       });
     }
+
     const booking = await PoojaBooking.findOne({ 
       bookingId: bookingId,
       panditId: panditId 
@@ -688,6 +619,7 @@ const poojaComplete = async (req, res) => {
         status: 0
       });
     }
+
     if (booking.otp !== otp) {
       return res.status(400).json({
         message: "Invalid OTP",
@@ -695,11 +627,9 @@ const poojaComplete = async (req, res) => {
       });
     }
 
-    // Get current time in HH:MM:SS format
     const now = new Date();
     const timeString = now.toTimeString().split(" ")[0];
 
-    // Update the booking
     const updatedBooking = await PoojaBooking.findOneAndUpdate(
       { 
         bookingId: bookingId,
@@ -709,25 +639,45 @@ const poojaComplete = async (req, res) => {
         $set: { 
           "schedule.poojaEndTime": timeString,
           "schedule.ongoingStatus": 0,
-          bookingStatus: 3, // Mark as completed
-          otp: null // Clear the OTP after successful verification
+          bookingStatus: 3,
+          otp: null
         } 
       },
-      { new: true } // Return the updated document
+      { new: true }
     );
+
     const user = await User.findOne({ _id: updatedBooking.userDetails.userId });
     if (user && user.fcm_tokken) {
-      await sendPoojaCompleteNotificationToUser(
+      await sendPoojaCompleteNotification(
         user.fcm_tokken,
         updatedBooking.bookingId
       );
     }
+
+    // Send completion email to user
+    try {
+      if (user && user.email) {
+        await sendEmail(
+          user.email,
+          `Pooja Completed Successfully - ${updatedBooking.bookingId}`,
+          'PoojaEmail/poojaCompleted',
+          {
+            bookingId: updatedBooking.bookingId,
+            poojaName: updatedBooking.bookingDetails.poojaName,
+            completionTime: timeString,
+            panditName: updatedBooking.panditId.name || "Your Pandit"
+          }
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send completion email:', emailError);
+    }
+
     res.status(200).json({
       message: "Pooja completed successfully",
       status: 1
     });
   } catch (error) {
-    console.error("❌ Error completing pooja:", error.message);
     res.status(500).json({
       message: "Error completing pooja",
       error: error.message,
@@ -736,45 +686,13 @@ const poojaComplete = async (req, res) => {
   }
 };
 
-// Helper function to send completion notification to user
-const sendPoojaCompleteNotificationToUser = async (userFcmToken, bookingId) => {
-  const message = {
-    token: userFcmToken,
-    data: {
-      title: "Pooja Completed",
-      body: `Your pooja (Booking ID: ${bookingId}) has been successfully completed`,
-      booking_id: bookingId.toString(),
-      booking_type: "poojaCompleted",
-    },
-    android: {
-      priority: "high",
-      notification: {
-        sound: "default",
-        channel_id: "poojaStatusUpdates",
-      },
-    },
-  };
-
-  try {
-    await admin.messaging().send(message);
-    console.log(`📩 Pooja completion notification sent to user for booking ${bookingId}`);
-  } catch (error) {
-    console.error("❌ Error sending pooja completion notification:", error.message);
-  }
-};
-
 module.exports = {
   createPoojaBooking,
   getOrder,
-  addDeliveryAddress,
-  getDeliveryAddress,
   getAllOrders,
-  getAllOrdersWithAddress,
-  updatePoojaBooking,
   getPoojaOrdersByUserId,
+  updatePoojaBooking,
   acceptRejectBooking,
-  getDeliveryAddressByUSerID,
-  acceptOrRejectMandaliBooking,
   cancelPoojaBooking,
   poojaStart,
   poojaComplete,

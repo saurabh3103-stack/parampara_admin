@@ -83,7 +83,7 @@ exports.createBhajan = [
             await newBhajan.save();
             // Create Partner entry
             const newPartner = new Partner({
-                userId: userID,
+                userID: userID,
                 user_type: 'bhajan_mandal',
                 username: owner_name,
                 name: owner_name,

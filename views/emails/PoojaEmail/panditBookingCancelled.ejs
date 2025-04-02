@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pooja Booking Cancelled</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #ffebee; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .details { background-color: #f5f5f5; padding: 15px; border-radius: 5px; }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Pooja Booking Cancelled</h2>
+        </div>
+        
+        <div class="content">
+            <p>Respected Pandit Ji,</p>
+            
+            <p>The following booking assigned to you has been cancelled by the devotee:</p>
+            
+            <div class="details">
+                <h3>Booking Details:</h3>
+                <p><strong>Booking ID:</strong> <%= bookingId %></p>
+                <p><strong>Pooja:</strong> <%= poojaName %></p>
+                <p><strong>Devotee Name:</strong> <%= userName %></p>
+                <p><strong>Contact:</strong> <%= userPhone %></p>
+                <p><strong>Cancellation Time:</strong> <%= cancellationTime %></p>
+            </div>
+            
+            <p>This booking has been removed from your schedule. If you have any questions, please contact the Vaidic Parampara support team.</p>
+            
+            <p>Thank you for your understanding.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Vaidic Parampara. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

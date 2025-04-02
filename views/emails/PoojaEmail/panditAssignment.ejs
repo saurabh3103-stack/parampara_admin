@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Pooja Booking Assignment</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f5f5f5; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .details { background-color: #f9f9f9; padding: 15px; border-radius: 5px; }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #777; }
+        .button {
+            display: inline-block; padding: 10px 20px; background-color: #4CAF50; 
+            color: white; text-decoration: none; border-radius: 5px; margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>New Pooja Booking Assignment</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear Pandit Ji,</p>
+            
+            <p>You have been assigned a new Pooja booking. Please review the details below:</p>
+            
+            <div class="details">
+                <h3>Booking Details:</h3>
+                <p><strong>Booking ID:</strong> <%= bookingId %></p>
+                <p><strong>Pooja:</strong> <%= poojaName %></p>
+                <p><strong>Date:</strong> <%= date %></p>
+                <p><strong>Time:</strong> <%= time %></p>
+                <p><strong>Devotee Name:</strong> <%= userName %></p>
+                <p><strong>Contact:</strong> <%= userPhone %></p>
+            </div>
+            
+            <p>Please confirm your availability and prepare accordingly.</p>
+            
+            <p>Thank you for your service to the community.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Vaidic Parampara. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

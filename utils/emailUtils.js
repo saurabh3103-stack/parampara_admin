@@ -1,44 +1,3 @@
-// // utils/emailUtils.js
-// const nodemailer = require('nodemailer');
-// const path = require('path');
-// const fs = require('fs');
-// const ejs = require('ejs');
-
-// // Create transporter
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: 'shivanshu.deific@gmail.com',
-//     pass: 'dptwtjudzscjtosb',
-//   },
-// });
-
-
-// const sendEmail = async (to, subject, templateName, data) => {
-//   try {
-//     const templatePath = path.join(__dirname, `../views/emails/${templateName}.ejs`);
-//     const template = fs.readFileSync(templatePath, 'utf-8');
-//     const html = ejs.render(template, data);
-
-//     const mailOptions = {
-//       from: `"Vaidic Parampara" <shivanshu.deific@gmail.com>`,
-//       to,
-//       subject,
-//       html,
-//     };
-
-//     await transporter.sendMail(mailOptions);
-//     console.log(`Email sent to ${to}`);
-//   } catch (error) {
-//     console.error('Error sending email:', error);
-//     throw error;
-//   }
-// };
-
-// module.exports = { sendEmail };
-
-
-// utils/emailUtils.js
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
@@ -77,8 +36,6 @@ const sendEmail = async (to, subject, templateName, data) => {
     }
 
     const templatePath = path.join(__dirname, `../views/emails/${templateName}.ejs`);
-    
-    // Check if template exists
     if (!fs.existsSync(templatePath)) {
       throw new Error(`Email template not found: ${templateName}`);
     }

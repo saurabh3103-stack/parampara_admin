@@ -97,6 +97,7 @@ exports.loginPartner = async (req, res) => {
             partner.fcm_tokken = fcmToken;
             await partner.save();
         }
+        console.log(partner.userID);
         let userData = { id: partner._id, username: partner.username, email: partner.email };
         // Check user_type and fetch corresponding data
         if (partner.user_type === 'pandit') {
@@ -109,6 +110,7 @@ exports.loginPartner = async (req, res) => {
             }
         } else if (partner.user_type === 'bhajan_mandal') {
             const bhajanMandal = await BhajanMandal.findOne({ "userID":partner.userID });
+            console.log(bhajanMandal);
             await BhajanMandal.updateOne(
                     { _id: bhajanMandal._id },
                     { $set: { "bhajan_owner.fcm_tokken": fcmToken } }

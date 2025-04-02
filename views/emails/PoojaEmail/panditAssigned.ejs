@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pandit Assigned for Your Pooja</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #e8f5e9; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .otp-box { 
+            background-color: #f1f8e9; padding: 15px; text-align: center;
+            font-size: 24px; font-weight: bold; margin: 20px 0;
+            border: 2px dashed #4CAF50;
+        }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Pandit Assigned for Your Pooja</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear Devotee,</p>
+            
+            <p>We're pleased to inform you that <strong><%= panditName %></strong> has accepted your booking for <strong><%= poojaName %></strong>.</p>
+            
+            <h3>Booking Details:</h3>
+            <p><strong>Booking ID:</strong> <%= bookingId %></p>
+            <p><strong>Date:</strong> <%= date %></p>
+            <p><strong>Time:</strong> <%= time %></p>
+            <p><strong>Pandit Contact:</strong> <%= panditContact %></p>
+            
+            <h3>Your Verification OTP:</h3>
+            <div class="otp-box">
+                <%= otp %>
+            </div>
+            <p>Please provide this OTP to the pandit when they arrive to verify the booking.</p>
+            
+            <p>We wish you a spiritually fulfilling experience.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Vaidic Parampara. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

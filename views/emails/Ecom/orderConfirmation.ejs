@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title><%= subject %></title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f8f8; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #777; }
+        .order-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .order-table th, .order-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .order-table th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmation</h1>
+            <p>Thank you for your purchase, <%= username %>!</p>
+        </div>
+        
+        <div class="content">
+            <p>Your order has been received and is being processed. Here are your order details:</p>
+            
+            <h2>Order #<%= orderId %></h2>
+            <p><strong>Order Date:</strong> <%= orderDate %></p>
+            <p><strong>Status:</strong> <%= status %></p>
+            
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% items.forEach(item => { %>
+                        <tr>
+                            <td><%= item.productName %></td>
+                            <td><%= item.quantity %></td>
+                            <td>₹<%= item.amount %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">Total Amount:</th>
+                        <th>₹<%= totalAmount %></th>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <p>We'll notify you when your order ships. If you have any questions, please contact our support team.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Vaidic Parampara. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

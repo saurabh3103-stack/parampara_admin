@@ -19,7 +19,7 @@ const generateNumericUUID = () => {
 
 
 function generateOTP() {
-  return Math.ceil(100000 + Math.random() * 999999);
+  return Math.ceil(100000 + Math.random() * 100000);
 }
 
 const createBhanjanMandaliBooking = async (req, res) => {

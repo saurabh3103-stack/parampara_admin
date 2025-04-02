@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmed</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #e3f2fd; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .details { background-color: #f5f5f5; padding: 15px; border-radius: 5px; }
+        .otp-box { 
+            background-color: #e8eaf6; padding: 15px; text-align: center;
+            font-size: 24px; font-weight: bold; margin: 20px 0;
+            border: 2px dashed #3f51b5;
+        }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Booking Confirmed</h2>
+        </div>
+        
+        <div class="content">
+            <p>Respected Pandit Ji,</p>
+            
+            <p>Thank you for accepting the booking for <strong><%= poojaName %></strong>.</p>
+            
+            <div class="details">
+                <h3>Booking Details:</h3>
+                <p><strong>Booking ID:</strong> <%= bookingId %></p>
+                <p><strong>Date:</strong> <%= date %></p>
+                <p><strong>Time:</strong> <%= time %></p>
+                <p><strong>Devotee Name:</strong> <%= userName %></p>
+                <p><strong>Contact:</strong> <%= userPhone %></p>
+                <p><strong>Address:</strong> <%= userAddress %></p>
+            </div>
+            
+            <h3>Verification OTP:</h3>
+            <div class="otp-box">
+                <%= otp %>
+            </div>
+            <p>Please collect this OTP from the devotee when you arrive to verify the booking.</p>
+            
+            <p>We appreciate your service to the community.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Vaidic Parampara. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

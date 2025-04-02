@@ -15,7 +15,8 @@ const { createPandit,getPandits,loginPandit,updatePanditById, deletePanditById ,
 const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
-const { createPoojaBooking,getOrder,addDeliveryAddress,getDeliveryAddress,getAllOrders,getAllOrdersWithAddress,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,getDeliveryAddressByUSerID,cancelPoojaBooking,poojaStart,poojaComplete} = require("../controllers/orderController");
+const { createPoojaBooking,getOrder,getAllOrders,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,cancelPoojaBooking,poojaStart,poojaComplete} = require("../controllers/orderController");
+const { addDeliveryAddress,getDeliveryAddress,getAllOrdersWithAddress,getDeliveryAddressByUSerID} = require("../controllers/deliveryAddressController");
 const { createBhanjanMandaliBooking,getBhajanOrder,acceptOrRejectMandaliBooking,updateMandaliOrder,startBhajanMandal,completeBhajanMandal} = require('../controllers/bhajanmandalBookingController');    
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");

@@ -1,17 +1,20 @@
 // controllers/deliveryAddressController.js
 const { v4: uuidv4 } = require("uuid");
 const DeliveryAddress = require("../models/DeliveryAddress");
+const PoojaBooking = require("../models/PoojaBooking");
 
+// Add Delivery Address
 const addDeliveryAddress = async (req, res) => {
   try {
     const { OrderId, userId, DeliveryAddress: AddressDetails } = req.body;
-    console.log("Delivery Address:", JSON.stringify(req.body, null, 2));
     
     if (!OrderId || !AddressDetails || !AddressDetails.AddressLine1 || 
         !AddressDetails.Location || !AddressDetails.City || 
         !AddressDetails.State || !AddressDetails.PostalCode || 
         !AddressDetails.Country) {
-      return res.status(400).json({ message: "Missing required fields in the delivery address" });
+      return res.status(400).json({ 
+        message: "Missing required fields in the delivery address" 
+      });
     }
 
     const newDelivery = new DeliveryAddress({
@@ -36,30 +39,69 @@ const addDeliveryAddress = async (req, res) => {
   }
 };
 
+// Get Delivery Address
 const getDeliveryAddress = async (req, res) => {
   try {
     const { orderId } = req.params;
     const delivery = await DeliveryAddress.findOne({ OrderId: orderId });
     if (!delivery) {
-      return res.status(200).json({ message: "Delivery address not found" });
+      return res.status(200).json({ 
+        message: "Delivery address not found" 
+      });
     }
     res.json(delivery);
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving delivery address", error: error.message });
+    res.status(500).json({ 
+      message: "Error retrieving delivery address", 
+      error: error.message 
+    });
   }
 };
 
+// Get All Orders with Addresses
+const getAllOrdersWithAddress = async (req, res) => {
+  try {
+    const orders = await PoojaBooking.find();
+    const ordersWithAddresses = await Promise.all(orders.map(async (order) => {
+      const delivery = await DeliveryAddress.findOne({ OrderId: order.OrderId });
+      return {
+        ...order.toObject(),
+        DeliveryAddress: delivery ? delivery.DeliveryAddress : null,
+      };
+    }));
+
+    if (ordersWithAddresses.length === 0) {
+      return res.status(404).json({ 
+        message: "No orders found" 
+      });
+    }
+
+    res.json(ordersWithAddresses);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error retrieving orders with addresses", 
+      error: error.message 
+    });
+  }
+};
+
+// Get Delivery Address by User ID
 const getDeliveryAddressByUSerID = async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) {
-      return res.status(400).json({ message: "User Id is Required", status: 0 });
+      return res.status(400).json({ 
+        message: "User Id is Required", 
+        status: 0 
+      });
     }
 
     const userDelivery = await DeliveryAddress.find({ userId: userId });
-
     if (!userDelivery || userDelivery.length === 0) {
-      return res.status(200).json({ message: "No Delivery Address Found", status: 0 });
+      return res.status(200).json({ 
+        message: "No Delivery Address Found", 
+        status: 0 
+      });
     }
 
     const formattedDelivery = userDelivery.map((delivery) => {
@@ -91,5 +133,6 @@ const getDeliveryAddressByUSerID = async (req, res) => {
 module.exports = {
   addDeliveryAddress,
   getDeliveryAddress,
+  getAllOrdersWithAddress,
   getDeliveryAddressByUSerID,
 };

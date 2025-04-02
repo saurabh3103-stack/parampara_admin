@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pooja Booking Cancelled</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #ffebee; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .refund { background-color: #fff8e1; padding: 15px; border-radius: 5px; }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Pooja Booking Cancelled</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear Devotee,</p>
+            
+            <p>Your booking for <strong><%= poojaName %></strong> (Booking ID: <%= bookingId %>) has been successfully cancelled.</p>
+            
+            <div class="refund">
+                <h3>Refund Information</h3>
+                <p>If you paid for this booking, your refund will be processed within 5-7 business days.</p>
+                <p>You will receive the refund through the original payment method.</p>
+            </div>
+            
+            <p>Cancellation Time: <%= cancellationTime %></p>
+            
+            <p>We're sorry to see you go. If this was a mistake or you'd like to reschedule, please contact our support team.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Vaidic Parampara. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
