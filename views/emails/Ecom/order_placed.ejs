@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f8f8; padding: 15px; text-align: center; }
+        .order-details { margin: 20px 0; }
+        .product { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Order Has Been Placed!</h2>
+            <p>Order ID: <%= orderId %></p>
+        </div>
+        
+        <div class="order-details">
+            <h3>Order Summary</h3>
+            <% orderDetails.forEach(product => { %>
+                <div class="product">
+                    <p><strong><%= product.productName %></strong></p>
+                    <p>Quantity: <%= product.quantity %></p>
+                    <p>Price: ₹<%= product.amount %></p>
+                </div>
+            <% }); %>
+            
+            <h4>Total Amount: ₹<%= totalAmount %></h4>
+        </div>
+        
+        <p>Thank you for shopping with us! We'll notify you when your order ships.</p>
+        
+        <div class="footer">
+            <p>If you have any questions, please contact our customer support.</p>
+        </div>
+    </div>
+</body>
+</html>

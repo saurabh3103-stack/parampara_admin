@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f8f8; padding: 15px; text-align: center; }
+        .status { margin: 20px 0; padding: 15px; text-align: center; }
+        .pending { background-color: #fff3cd; color: #856404; }
+        .shipped { background-color: #cce5ff; color: #004085; }
+        .delivered { background-color: #d4edda; color: #155724; }
+        .cancelled { background-color: #f8d7da; color: #721c24; }
+        .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Order Status Has Been Updated</h2>
+            <p>Order ID: <%= orderId %></p>
+        </div>
+        
+        <div class="status <%= orderStatus %>">
+            <h3>Current Status: <%= orderStatus.toUpperCase() %></h3>
+            <% if (orderStatus === 'shipped') { %>
+                <p>Your order is on its way!</p>
+            <% } else if (orderStatus === 'delivered') { %>
+                <p>Your order has been delivered. Thank you for shopping with us!</p>
+            <% } else if (orderStatus === 'cancelled') { %>
+                <p>Your order has been cancelled. Please contact support if you have any questions.</p>
+            <% } %>
+        </div>
+        
+        <div class="footer">
+            <p>If you have any questions, please contact our customer support.</p>
+        </div>
+    </div>
+</body>
+</html>

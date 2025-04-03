@@ -75,35 +75,40 @@ const createPoojaBooking = async (req, res) => {
 // Assign Pandit 
 const assignPandit = async (poojaBooking, userLat, userLong, index) => {
   try {
+    // Dynamic configuration
+    const MAX_DISTANCE_KM = 2; // Maximum distance in km (can be made configurable)
+    const REJECTION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes in milliseconds (can be configurable)
     const poojaId = poojaBooking.bookingDetails.poojaId;
-    let panditCategories = await PanditCategory.find({ pooja_id: poojaId, status: 1 });
-    
+    let panditCategories = await PanditCategory.find({ pooja_id: poojaId, status: 1 });    
     if (!panditCategories.length) {
       return { status: 404, message: "No Pandit category found for this pooja.", accepted: false };
     }
-
     let panditIds = panditCategories.map(category => category.pandit_id);
     let matchedPandits = await pandit.find({ 
       _id: { $in: panditIds },
       'profile_status': 'active'
     });
-
     if (!matchedPandits.length) {
       return { status: 404, message: "No matching Pandits found", accepted: false };
     }
-
-    matchedPandits = matchedPandits.map(pandit => ({
-      ...pandit.toObject(),
-      distance: getDistance(userLat, userLong, pandit.latitude, pandit.longitude)
-    })).sort((a, b) => a.distance - b.distance);
-
-    if (index >= matchedPandits.length) {
+    // Calculate distances and categorize pandits
+    matchedPandits = matchedPandits.map(pandit => {
+      const distance = getDistance(userLat, userLong, pandit.latitude, pandit.longitude);
+      return {
+        ...pandit.toObject(),
+        distance,
+        isNearby: distance <= MAX_DISTANCE_KM
+      };
+    });
+    // Separate nearby and far pandits
+    const nearbyPandits = matchedPandits.filter(p => p.isNearby).sort((a, b) => a.distance - b.distance);
+    const farPandits = matchedPandits.filter(p => !p.isNearby).sort((a, b) => a.distance - b.distance);
+    // Combine with nearby pandits first, then far pandits
+    const prioritizedPandits = [...nearbyPandits, ...farPandits];
+    if (index >= prioritizedPandits.length) {
       return { status: 200, message: "No Pandit accepted the booking.", accepted: false };
     }
-
-    const selectedPandit = matchedPandits[index];
-    
-    // Send email to pandit
+    const selectedPandit = prioritizedPandits[index];
     try {
       if (selectedPandit.email) {
         await sendEmail(
@@ -119,29 +124,62 @@ const assignPandit = async (poojaBooking, userLat, userLong, index) => {
             userPhone: poojaBooking.userDetails.contactNumber
           }
         );
-        console.log('email send');
       }
     } catch (emailError) {
       console.error('Failed to send pandit assignment email:', emailError);
     }
-
     await sendPanditAssignmentNotification(
       selectedPandit.fcm_tokken,
       poojaBooking,
       index
     );
+    setTimeout(async () => {
+      try {
+        // Check if the booking is still unassigned
+        const currentBooking = await PoojaBooking.findOne({ bookingId: poojaBooking.bookingId });
+        if (currentBooking && currentBooking.bookingStatus === 1) { // Still unassigned
+          console.log(`Pandit ${selectedPandit._id} did not respond, moving to next pandit`);
+          // Create missed booking record
+          const missedBooking = new MissedPoojaBooking({
+            pandit_id: selectedPandit._id,
+            isAutomatic: true,
+            bookingDetails: {
+              poojaId: poojaBooking.bookingDetails.poojaId,
+              poojaName: poojaBooking.bookingDetails.poojaName,
+              Type: poojaBooking.bookingDetails.Type,
+              isSamagriIncluded: poojaBooking.bookingDetails.isSamagriIncluded,
+            },
+            schedule: {
+              date: poojaBooking.schedule.date,
+              time: poojaBooking.schedule.time
+            },
+          });
+          await missedBooking.save();
+          // Assign to next pandit
+          assignPandit(poojaBooking, userLat, userLong, index + 1);
+        }
+      } catch (timeoutError) {
+        console.error('Error in rejection timeout handler:', timeoutError);
+      }
+    }, REJECTION_TIMEOUT_MS);
 
     return { 
       status: 200, 
-      message: "Pandits assigned", 
-      accepted: true, 
-      data: matchedPandits 
+      message: "Pandit assignment initiated", 
+      accepted: false, // Initially false until explicitly accepted
+      data: {
+        pandits: prioritizedPandits,
+        currentIndex: index,
+        currentPandit: selectedPandit
+      } 
     };
   } catch (error) {
+    console.error("Error in assignPandit:", error);
     return { 
       status: 500, 
       message: "Internal Server Error", 
-      accepted: false 
+      accepted: false,
+      error: error.message
     };
   }
 };
@@ -157,7 +195,6 @@ const updatePoojaBooking = async (req, res) => {
         status: 0 
       });
     }
-
     const poojaBooking = await PoojaBooking.findOne({ bookingId });
     if (!poojaBooking) {
       return res.status(404).json({ 
@@ -165,17 +202,13 @@ const updatePoojaBooking = async (req, res) => {
         status: 0 
       });
     }
-
     poojaBooking.bookingStatus = 1; // Mark as confirmed
     poojaBooking.transactionDetails = { 
       transactionId, 
       transactionStatus, 
       transactionDate 
     };
-    
     await poojaBooking.save();
-
-    // Send order confirmation email
     try {
       const user = await User.findById(poojaBooking.userDetails.userId);
       if (user && user.email) {
@@ -196,9 +229,7 @@ const updatePoojaBooking = async (req, res) => {
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);
     }
-
     assignPandit(poojaBooking, userLat, userLong, 0);
-    
     res.status(200).json({
       message: "Booking Confirm", 
       status: 1
@@ -232,16 +263,13 @@ const acceptRejectBooking = async (req, res) => {
         status: 0 
       });
     }
-
     if (status === 1) { 
       // Get pandit details for email
       const panditDetails = await pandit.findById(panditId);
-      
       poojaBooking.panditId = panditId;
       poojaBooking.bookingStatus = 2; 
       poojaBooking.otp = generateOTP();
       await poojaBooking.save();
-
       const bookedUser = new BookedUser({
         userId: poojaBooking.userDetails.userId,
         partnerId: panditId,
@@ -254,7 +282,6 @@ const acceptRejectBooking = async (req, res) => {
         booking_time: poojaBooking.schedule.time,
         status: 1
       });
-
       await bookedUser.save();
       const user = await User.findOne({ _id: poojaBooking.userDetails.userId });
       
