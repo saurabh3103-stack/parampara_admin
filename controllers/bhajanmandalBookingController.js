@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 const MandaliBooking = require("../models/BhajanMandalBooking");
 const BookedUser = require("../models/bookedUserModel");
 const User = require("../models/userModel");
-const { sendBhajanMandaliNotification, sendBookingStatusNotification } = require("../utils/notificationUtils");
+const { sendBhajanMandaliNotification, sendBookingStatusNotification,sendCancelNotification } = require("../utils/notificationUtils");
 const { sendEmail } = require('../utils/emailUtils');
 
 const generateNumericUUID = () => {
@@ -130,7 +130,7 @@ const updateMandaliOrder = async (req, res) => {
 
 const acceptOrRejectMandaliBooking = async (req, res) => {
   try {
-    console.log(req.body);
+   
     const { bookingId, bookingStatus, mandaliId } = req.body;
     if (!bookingId || !mandaliId || !bookingStatus) {
       return res.status(400).json({ 
@@ -189,6 +189,7 @@ const acceptOrRejectMandaliBooking = async (req, res) => {
     }
 
     if (user && user.fcm_tokken) {
+      console.log(user,user.fcm_tokken)
       await sendBookingStatusNotification(user.fcm_tokken, bookingId, bookingStatus);
       
     }
@@ -243,6 +244,7 @@ const startBhajanMandal = async (req, res) => {
 
     const user = await User.findOne({ _id: updatedBooking.userDetails.userId });
     if (user && user.fcm_tokken) {
+      console.log(user,user.fcm_tokken)
       await sendBookingStatusNotification(user.fcm_tokken, updatedBooking.bookingId, 2); // 2 for started
     }
     await sendEmail(
@@ -311,6 +313,7 @@ const completeBhajanMandal = async (req, res) => {
 
     const user = await User.findOne({ _id: updatedBooking.userDetails.userId });
     if (user && user.fcm_tokken) {
+      console.log(user,user.fcm_tokken)
       await sendBookingStatusNotification(user.fcm_tokken, updatedBooking.bookingId, 3); // 3 for completed
     }
     await sendEmail(
@@ -336,11 +339,84 @@ const completeBhajanMandal = async (req, res) => {
   }
 };
 
+
+
+const cancelBhajanMandalOrder = async (req, res) => {
+  try {
+    const { bookingId, id } = req.body;
+    
+    if (!bookingId || !id) {
+      return res.status(400).json({ 
+        message: "Enter Required Fields", 
+        status: 0 
+      });
+    }
+
+    // Find the order by bookingId and userId
+    const bhajanOrder = await MandaliBooking.findOne({ 
+      "bookingId": bookingId, 
+      "userDetails.userId": id 
+    });
+
+    if (!bhajanOrder) {
+      return res.status(404).json({ 
+        message: "Bhajan Mandal order not found", 
+        status: 0 
+      });
+    }
+
+   
+
+    // Update booking status to canceled
+    bhajanOrder.bookingStatus = 4;
+    await bhajanOrder.save();
+
+    // Send push notification if mandal head has FCM token
+    
+   let fcmToken=null;
+   const user = await User.findOne({ _id: id });
+   
+   if (user){
+    fcmToken=user.fcm_tokken
+   }
+   console.log(fcmToken)
+
+
+
+
+    if (fcmToken) {
+      await sendCancelNotification(fcmToken, bhajanOrder.bookingId);
+    }
+
+
+
+
+
+    
+
+
+   
+    
+
+    res.status(200).json({ 
+      message: "Bhajan Mandal Order Cancelled Successfully", 
+      status: 1 
+    });
+
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error canceling Bhajan Mandal order", 
+      error: error.message, 
+      status: 0 
+    });
+  }
+};
+
 module.exports = {
   createBhanjanMandaliBooking,
   getBhajanOrder,
   updateMandaliOrder,
   acceptOrRejectMandaliBooking,
-  startBhajanMandal,
+  startBhajanMandal,cancelBhajanMandalOrder,
   completeBhajanMandal
 };

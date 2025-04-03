@@ -39,6 +39,93 @@ const addDeliveryAddress = async (req, res) => {
   }
 };
 
+// Get Delivery Address by User ID
+const getDeliveryAddressByUSerID = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ 
+        message: "User Id is Required", 
+        status: 0 
+      });
+    }
+
+    const userDelivery = await DeliveryAddress.find({ userId: userId });
+    if (!userDelivery || userDelivery.length === 0) {
+      return res.status(200).json({ 
+        message: "No Delivery Address Found", 
+        status: 0 
+      });
+    }
+
+    const formattedDelivery = userDelivery.map((delivery) => {
+      const { Landmark, Location, ...rest } = delivery.DeliveryAddress;
+      return {
+        ...delivery.toObject(),
+        DeliveryAddress: {
+          ...rest,
+          Landmark,
+          Location,
+        },
+      };
+    });
+
+    res.status(200).json({ 
+      message: "Delivery Address Found", 
+      data: formattedDelivery, 
+      status: 1 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error in Retrieving Delivery Data", 
+      error: error.message, 
+      status: 0 
+    });
+  }
+};
+
+
+const updateDeliveryAddressByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { DeliveryAddress: AddressDetails } = req.body;
+
+    if (!userId || !AddressDetails || !AddressDetails.AddressLine1 || 
+        !AddressDetails.Location || !AddressDetails.City || 
+        !AddressDetails.State || !AddressDetails.PostalCode || 
+        !AddressDetails.Country) {
+      return res.status(400).json({ 
+        message: "Missing required fields in the delivery address", 
+        status: 0 
+      });
+    }
+
+    const updatedDelivery = await DeliveryAddress.updateMany(
+      { userId: userId },  // Find records by userId
+      { $set: { DeliveryAddress: AddressDetails } }
+    );
+    
+
+    if (!updatedDelivery) {
+      return res.status(404).json({
+        message: "No delivery address found for the given user and order ID",
+        status: 0
+      });
+    }
+
+    res.status(200).json({
+      message: "Delivery address updated successfully",
+      delivery: updatedDelivery,
+      status: 1
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error updating delivery address",
+      error: error.message,
+      status: 0
+    });
+  }
+};
 // Get Delivery Address
 const getDeliveryAddress = async (req, res) => {
   try {
@@ -85,54 +172,12 @@ const getAllOrdersWithAddress = async (req, res) => {
   }
 };
 
-// Get Delivery Address by User ID
-const getDeliveryAddressByUSerID = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    if (!userId) {
-      return res.status(400).json({ 
-        message: "User Id is Required", 
-        status: 0 
-      });
-    }
 
-    const userDelivery = await DeliveryAddress.find({ userId: userId });
-    if (!userDelivery || userDelivery.length === 0) {
-      return res.status(200).json({ 
-        message: "No Delivery Address Found", 
-        status: 0 
-      });
-    }
-
-    const formattedDelivery = userDelivery.map((delivery) => {
-      const { Landmark, Location, ...rest } = delivery.DeliveryAddress;
-      return {
-        ...delivery.toObject(),
-        DeliveryAddress: {
-          ...rest,
-          Landmark,
-          Location,
-        },
-      };
-    });
-
-    res.status(200).json({ 
-      message: "Delivery Address Found", 
-      data: formattedDelivery, 
-      status: 1 
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      message: "Error in Retrieving Delivery Data", 
-      error: error.message, 
-      status: 0 
-    });
-  }
-};
 
 module.exports = {
   addDeliveryAddress,
   getDeliveryAddress,
   getAllOrdersWithAddress,
   getDeliveryAddressByUSerID,
+  updateDeliveryAddressByUserId
 };

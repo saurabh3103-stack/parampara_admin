@@ -14,3 +14,10 @@ const verifyToken = (token) => {
 };
 
 module.exports = { generateToken, verifyToken };
+
+
+
+// const userEmails = users.reduce((acc, user) => {
+//   if (user.fcm_tokken) acc[user._id.toString()] = user.email;
+//   return acc;
+// }, {});
