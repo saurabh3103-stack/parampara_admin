@@ -439,10 +439,6 @@ const cancelBhajanMandalOrder = async (req, res) => {
         booking: bhajanOrder,
       },
     );
-   
-
-
-
     if (fcmToken) {
       await sendCancelNotification(fcmToken, bhajanOrder.bookingId);
     }

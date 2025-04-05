@@ -28,7 +28,7 @@ const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = requir
 
 const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug,featuredProduct,offeredproduct } = require('../controllers/EcommerceController/ProductController');
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
-const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
+const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId,cancelEcommerceOrder}= require("../controllers/EcommerceController/EcommerceOrderController");
 const {addStory,addSubStory,getStoryBySlug,getSubStoryBySlug,updateStory,updateSubStory,updateStoryStatus,updateSubStoryStatus,deleteStory} = require("../controllers/storyController");
 const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updateCommission} = require("../controllers/SettingController");
 const { loginPartner,registerPartner } = require("../controllers/partnerController");
@@ -204,6 +204,8 @@ router.put("/e-store/update-order-status/:orderId",authenticateToken,updateOrder
 router.put("/e-store/update-multiple-order-status",authenticateToken,updateMultipleOrderStatuses);
 router.get("/user/:id",authenticateToken,getUserById);
 
+router.put('/e-store/cancel-order',authenticateToken,cancelEcommerceOrder);
+
 // Ecommerce Section 
 
 // // Ecommerce Review
@@ -255,3 +257,6 @@ router.get('/bhavya-ayojan/user-id/:userId',authenticateToken,getBhavyaAyojanByU
 // Bhavya ayojan
 module.exports = router;
 
+
+
+// cancelEcommerceOrder

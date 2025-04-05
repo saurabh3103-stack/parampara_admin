@@ -371,3 +371,69 @@ exports.updateMultipleOrderStatuses = async (req, res) => {
     });
   }
 };
+
+
+
+exports.cancelEcommerceOrder = async (req, res) => {
+  try {
+    const { orderId, userId } = req.body;
+
+    if (!orderId || !userId) {
+      return res.status(400).json({
+        message: 'Order ID and User ID are required',
+        status: 0,
+      });
+    }
+
+    // Find the order by orderId and userId
+    const order = await eCommerceOrder.findOne({
+      orderId: orderId,
+      'userDetails.userId': userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: 'Order not found',
+        status: 0,
+      });
+    }
+
+    // Check if order can be canceled (you might want to add more conditions)
+    if (order.orderStatus === 4) {
+      return res.status(400).json({
+        message: 'Order is already canceled',
+        status: 0,
+      });
+    }
+
+    if (order.orderStatus === 3) { // Assuming 3 is "delivered"
+      return res.status(400).json({
+        message: 'Delivered orders cannot be canceled',
+        status: 0,
+      });
+    }
+
+    // Update order status to canceled (4)
+    order.orderStatus = 4;
+    order.canceledAt = new Date();
+    await order.save();
+
+    // Get user details for notification and email
+    const user = await User.findOne({ _id: userId });
+    let fcmToken = user ? user.fcm_tokken : null;
+
+   
+
+    res.status(200).json({
+      message: 'Order canceled successfully',
+      status: 1,
+    });
+  } catch (error) {
+    console.error('Error canceling order:', error);
+    res.status(500).json({
+      message: 'Error canceling order',
+      error: error.message,
+      status: 0,
+    });
+  }
+};
