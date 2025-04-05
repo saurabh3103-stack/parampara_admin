@@ -16,11 +16,11 @@ const { getPanditsInRange }=require('../controllers/PanditRangeController')
 const { sendOtp,verifyOtp } = require("../controllers/otpController");
 const { addToCart,getCartItems,removeCartItem,removeAllCartItems} = require("../controllers/cartController");
 const { createPoojaBooking,getOrder,getAllOrders,updatePoojaBooking,getPoojaOrdersByUserId,acceptRejectBooking,cancelPoojaBooking,poojaStart,poojaComplete} = require("../controllers/orderController");
-const { addDeliveryAddress,getDeliveryAddress,getAllOrdersWithAddress,getDeliveryAddressByUSerID} = require("../controllers/deliveryAddressController");
-const { createBhanjanMandaliBooking,getBhajanOrder,acceptOrRejectMandaliBooking,updateMandaliOrder,startBhajanMandal,completeBhajanMandal} = require('../controllers/bhajanmandalBookingController');    
+const { addDeliveryAddress,getDeliveryAddress,getAllOrdersWithAddress,getDeliveryAddressByUSerID,updateDeliveryAddressByUserId} = require("../controllers/deliveryAddressController");
+const { createBhanjanMandaliBooking,getBhajanOrder,acceptOrRejectMandaliBooking,updateMandaliOrder,startBhajanMandal,completeBhajanMandal,cancelBhajanMandalOrder} = require('../controllers/bhajanmandalBookingController');    
 const { createTransaction } = require("../controllers/transactionController");
 const { createBhajanCategory,getbhajanCategory,getbhajanCategoryUser,deletebhajanCategory,getbhajanCategoryById,updateBhajanCategory,updateBhajanCategoryStatus } = require("../controllers/bhajan_categoryController");
-const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin,bhajanMandaliBookingUser,getBhajanMandaliBooking,getAllBhajanMandaliBooking,bhajanMandaliBookingUserID} = require("../controllers/bhajanmandalController");
+const { createBhajan,getBhajanBySlug,getBhajanById,getAllBhajans,getActiveBhajans,updateBhajan,updateBhajanStatus,deleteBhajan,getBhajansByCategory,bhajanLogin,bhajanMandaliBookingUser,getBhajanMandaliBooking,getAllBhajanMandaliBooking,bhajanMandaliBookingUserID,ca} = require("../controllers/bhajanmandalController");
 const { addVideo,editVideo,deleteVideo,getVideosByBhajanMandal,getactiveVideosByBhajanMandal,getAllBhajanMandalVideos } = require('../controllers/bhajanvideoController');
 const { createBrahmanBhoj,getBrahmanBhoj,getBrahmanBhojByID,cancelBrahmanByID,getBrahmanBhojByuserID } = require('../controllers/brahmanBhojController');
 const { createCategory,getAllCategories,getActiveCategories,getCategoryById,updateCategory,deleteCategory,activeInactive}= require('../controllers/EcommerceController/ProductCategoryController');
@@ -78,6 +78,7 @@ router.put('/pooja/category/update-status', authenticateToken , updatePoojaCateg
 router.get('/pooja/all-samagri/', authenticateToken, getPoojaSamaagri);
 router.post('/pooja/add-samagri/', authenticateToken, createPoojaSamagri);
 router.put('/pooja/cancel-booking/',authenticateToken,cancelPoojaBooking);
+
 router.get('/pooja/samagri/:id',authenticateToken,samagriByPoojaId);
 router.post("/order/pooja-booking",authenticateToken, createPoojaBooking); 
 router.get("/orders/:orderId",authenticateToken, getOrder); 
@@ -91,6 +92,7 @@ router.post("/orders/acceptReject",authenticateToken,acceptRejectBooking);
 router.get("/user/get-booking-user/:userId/:bookingstatus",authenticateToken,getPoojaBookingUser);
 router.get("/user/get-booking-user/:userId",authenticateToken,getAllPoojaBookingUser);
 router.get("/user/delivery-address/:userId",authenticateToken,getDeliveryAddressByUSerID);
+router.put("/user/update-delivery-address/:userId",authenticateToken,updateDeliveryAddressByUserId);
 router.get("/user/get-mandali-booking/:userId/:bookingstatus",authenticateToken,bhajanMandaliBookingUser);
 
 // End Pooja Routes
@@ -166,6 +168,7 @@ router.put('/order/update-mandali-order',authenticateToken,updateMandaliOrder);
 router.put('/order/accept-reject-mandali',authenticateToken,acceptOrRejectMandaliBooking);
 router.post('/bhajan-mandali/start-bhajan',authenticateToken,startBhajanMandal);
 router.post('/bhajan-mandali/complete-bhajan',authenticateToken,completeBhajanMandal);
+router.put('/bhajan/cancel-booking/',authenticateToken,cancelBhajanMandalOrder);
 router.get('/bhajan-mandali/booking-user/:userId',authenticateToken,bhajanMandaliBookingUserID);
 // Bhajan Mandal Routes end
 // Ecommerce Section 
@@ -251,4 +254,3 @@ router.get('/bhavya-ayojan/user-id/:userId',authenticateToken,getBhavyaAyojanByU
 
 // Bhavya ayojan
 module.exports = router;
-

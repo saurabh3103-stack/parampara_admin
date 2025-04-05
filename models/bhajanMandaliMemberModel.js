@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const bhajanMndalMemberSchema = new mongoose.Schema({
-        userID:{type:String},
+        bhajanMandaliID:{type:String},
         name:{type:String},
         role:{type:String},
         experience:{type:String},

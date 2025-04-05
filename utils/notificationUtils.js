@@ -54,6 +54,9 @@ const sendBookingStatusNotification = async (
   bookingId,
   status,
 ) => {
+
+
+  console.log(userFcmToken, bookingId,status,"OF SEND BHAJAN BOOKING STATUS NOTIFICATION")
   const statusText =
     status === 1
       ? 'accepted'
@@ -77,12 +80,14 @@ const sendBookingStatusNotification = async (
 };
 
 const sendOrderNotification = async (fcmToken, orderDetails) => {
+  console.log("from send order notification function,",fcmToken,orderDetails)
   const notificationData = {
     data: {
       title: 'New Order Created',
       body: `Your order (ID: ${orderDetails.orderId}) has been placed successfully.`,
       order_id: orderDetails.orderId,
       order_status: orderDetails.orderStatus.toString(),
+      booking_type: 'ecommerce',
     },
   };
 
@@ -133,11 +138,29 @@ const sendPaymentStatusUpdateNotification = async (
       body: `Your payment for orders with ID: ${combinedPaymentId} is now ${statusText}.`,
       combined_payment_id: combinedPaymentId,
       transaction_status: transactionStatus,
+      booking_type: 'ecommerce',
     },
   };
 
   return await sendNotification(fcmToken, notificationData);
 };
+
+
+const sendCancelNotification = async (fcmToken, bookingId) => {
+  const notificationData = {
+    data: {
+      title: 'Bhajan Mandali Booking Cancelled',
+      body: `Booking (ID: ${bookingId}) has been cancelled by the user.`,
+      booking_id: bookingId,
+      booking_type: 'bhajanMandaliBooking',
+      status: 'cancelled',
+    },
+    channelId: 'booking_updates',
+  };
+
+  return await sendNotification(fcmToken, notificationData);
+};
+
 module.exports = {
   sendNotification,
   sendBhajanMandaliNotification,
@@ -145,4 +168,5 @@ module.exports = {
   sendPaymentStatusUpdateNotification,
   sendOrderNotification,
   sendOrderStatusUpdateNotification,
+  sendCancelNotification
 };

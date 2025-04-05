@@ -165,8 +165,7 @@ exports.registerPartner = [
           }
         } else {
           const requiredFields = [
-            'bhajan_name', 'slug_url', 'bhajan_category', 'bhajan_price',
-            'short_discription', 'long_discription', 'owner_name',
+            'owner_name',
             'owner_email', 'owner_phone', 'owner_password'
           ];
           const missingFields = requiredFields.filter(field => !req.body[field]);
@@ -179,11 +178,9 @@ exports.registerPartner = [
             });
           }
         }
-  
         // Check for existing user
         const email = user_type === 'pandit' ? req.body.email : req.body.owner_email;
         const mobile = user_type === 'pandit' ? req.body.mobile : req.body.owner_phone;
-  
         const existingPartner = await Partner.findOne({ $or: [{ email }, { mobile }] });
         if (existingPartner) {
           cleanupFiles(req.files);
@@ -192,7 +189,6 @@ exports.registerPartner = [
             status: 0 
           });
         }
-  
         // Hash password
         const passwordToHash = user_type === 'pandit' ? req.body.password : req.body.owner_password;
         const hashedPassword = await bcrypt.hash(passwordToHash, 10);

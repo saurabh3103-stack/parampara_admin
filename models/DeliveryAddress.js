@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const DeliveryAddressSchema = new mongoose.Schema({
   DeliveryId: { type: String, required: true, unique: true },
-  OrderId: { type: String, required: true },
+  OrderId: { type: String,default:null},
   userId:{type:String,default:null},
   DeliveryAddress: {
     AddressLine1: { type: String, required: true },
@@ -17,6 +17,4 @@ const DeliveryAddressSchema = new mongoose.Schema({
     Country: { type: String, required: true },
   },
 });
-
-
 module.exports = mongoose.model("DeliveryAddress", DeliveryAddressSchema);

@@ -17,9 +17,9 @@ const generateNumericUUID = () => {
 };
 
 exports.createOrder = async (req, res) => {
-  console.log(req.body);
+  
   try {
-    const orderId = 'ORDER' + generateNumericUUID();
+ const orderId = 'ORDER' + generateNumericUUID();
     const {
       userId,
       username,
@@ -27,9 +27,9 @@ exports.createOrder = async (req, res) => {
       email,
       products,
       combinedPaymentId,
-      fcm_tokken,
+    
     } = req.body;
-    console.log(req.body);
+    
     // Validate products array
     if (!Array.isArray(products)) {
       return res
@@ -62,7 +62,7 @@ exports.createOrder = async (req, res) => {
 
     await newOrder.save();
     console.log(newOrder);
-    await sendOrderNotification(fcm_tokken, newOrder);
+
     try {
       await sendEmail(
         email,
@@ -102,17 +102,32 @@ exports.updateOrderPayment = async (req, res) => {
   console.log(req.body);
   try {
     const { combinedPaymentId } = req.params;
-    const { transactionId, transactionStatus, transactionDate, fcm_tokken } =
-      req.body;
+    const { transactionId, transactionStatus, transactionDate } = req.body;
 
     // Validate transaction status
     if (!['pending', 'completed', 'failed'].includes(transactionStatus)) {
-      return res
-        .status(400)
-        .json({ message: 'Invalid transaction status', status: 0 });
+      return res.status(400).json({ message: 'Invalid transaction status', status: 0 });
     }
 
-    // Update payment details for all orders with the same combinedPaymentId
+    // Find order based on combinedPaymentId
+    const order = await eCommerceOrder.findOne({ combinedPaymentId });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found', status: 0 });
+    }
+
+    // Fetch user details
+    const { userId } = order.userDetails;
+    let fcm_tokken = null;
+
+    const user = await User.findOne({ _id: userId });
+    if (user) {
+      fcm_tokken = user.fcm_tokken;
+    } else {
+      console.log("User not found");
+    }
+
+    // Update all orders with the same combinedPaymentId
     const updatedOrders = await eCommerceOrder.updateMany(
       { combinedPaymentId },
       {
@@ -120,45 +135,39 @@ exports.updateOrderPayment = async (req, res) => {
         'paymentDetails.transactionId': transactionId,
         'paymentDetails.transactionStatus': transactionStatus,
         'paymentDetails.transactionDate': transactionDate || new Date(),
-      },
-      { new: true },
+      }
     );
 
     if (updatedOrders.modifiedCount === 0) {
-      return res
-        .status(404)
-        .json({
-          message: 'No orders found with the provided payment ID',
-          status: 0,
-        });
+      return res.status(404).json({ message: 'No orders updated', status: 0 });
     }
 
-    const notificationSent = await sendPaymentStatusUpdateNotification(
-      fcm_tokken,
-      combinedPaymentId,
-      transactionStatus,
-    );
-    if (!notificationSent) {
-      console.log('Failed to send notification for payment update.');
+    // Send notification if FCM token is available
+    if (fcm_tokken) {
+      const notificationSent = await sendOrderNotification(
+        fcm_tokken,
+       order
+      );
+
+      if (!notificationSent) {
+        console.log('Failed to send notification for payment update.');
+      }
     }
 
-    res
-      .status(200)
-      .json({
-        message: 'Payment updated successfully for all orders',
-        status: 1,
-      });
+    res.status(200).json({
+      message: 'Payment updated successfully for all orders',
+      status: 1,
+    });
   } catch (error) {
     console.log(error.message);
-    res
-      .status(500)
-      .json({
-        message: 'Error updating payment',
-        error: error.message,
-        status: 0,
-      });
+    res.status(500).json({
+      message: 'Error updating payment',
+      error: error.message,
+      status: 0,
+    });
   }
 };
+
 
 exports.geteStoreOrder = async (req, res) => {
   try {
@@ -207,10 +216,10 @@ exports.getAllOrderUserId = async (req, res) => {
 };
 
 exports.updateOrderStatus = async (req, res) => {
-  console.log("update api called up")
+  
   try {
     const { orderId } = req.params; // Extract orderId from request parameters
-    const { orderStatus, fcm_tokken } = req.body; // Extract the new order status
+    const { orderStatus } = req.body; // Extract the new order status
     const validStatuses = ['pending', 'shipped', 'delivered', 'cancelled'];
     if (!orderStatus || !validStatuses.includes(orderStatus.toLowerCase())) {
       return res
@@ -218,12 +227,20 @@ exports.updateOrderStatus = async (req, res) => {
         .json({ message: 'Invalid order status', status: 0 });
     }
     let order = await eCommerceOrder.findOne({ orderId });
-    console.log(order.userDetails);
+     let fcm_tokken = null;
+
+    const user = await User.findOne({ _id: order?.userDetails?.userId });
+    if (user) {
+      fcm_tokken = user.fcm_tokken;
+    } else {
+      console.log("User not found");
+    }
     if (!order) {
       return res.status(404).json({ message: 'Order not found', status: 0 });
     }
     order.orderStatus = orderStatus.toLowerCase();
     await order.save();
+    console.log(order.orderStatus)
 
     await sendOrderStatusUpdateNotification(
       fcm_tokken,
@@ -301,6 +318,12 @@ exports.updateMultipleOrderStatuses = async (req, res) => {
       if (user.fcm_tokken) acc[user._id.toString()] = user.fcm_tokken;
       return acc;
     }, {});
+
+    const userEmails = users.reduce((acc, user) => {
+  if (user.fcm_tokken) acc[user._id.toString()] = user.email;
+  return acc;
+}, {});
+    
 
     // Perform bulk order status update
     if (bulkUpdateOps.length > 0) {
