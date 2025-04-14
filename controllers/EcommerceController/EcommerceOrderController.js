@@ -17,7 +17,6 @@ const generateNumericUUID = () => {
 };
 
 exports.createOrder = async (req, res) => {
-  
   try {
  const orderId = 'ORDER' + generateNumericUUID();
     const {

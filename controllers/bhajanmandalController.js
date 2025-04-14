@@ -370,3 +370,36 @@ exports.bhajanMandaliBookingUserID = async(req,res)=>{
     }
 
 }
+
+exports.bhajanMandaliCity = async (req, res) => {
+    try {
+      const bhajanMandaliCities = await BhajanMandal.find({}, 'mandali_address.city');
+      if (!bhajanMandaliCities || bhajanMandaliCities.length === 0) {
+        return res.status(404).json({ message: "No City Found", status: 0 });
+      }  
+      const cityNames = bhajanMandaliCities.map(item => item.mandali_address.city);
+      return res.status(200).json({
+        message: "Bhajan Mandal City",
+        status: 1,
+        data: cityNames
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message, status: 0 });
+    }
+  };
+
+exports.bhajanMandaliByCity = async (req,res)=>{
+    try{
+        const city = req.paramscityName;
+        console.log(city);
+        const bhajanMandaliCities = await BhajanMandal.find({'mandali_address.city':city});
+        return res.status(200).json({
+            message: "Bhajan Mandal By City",
+            status: 1,
+            data: bhajanMandaliCities
+          });
+    }catch (error) {
+        res.status(500).json({ message: error.message, status: 0 });
+    }
+}
+  
