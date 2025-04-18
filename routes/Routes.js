@@ -28,11 +28,16 @@ const { ecomaddToCart, ecomgetCart, ecomremoveCartItem, ecomclearCart } = requir
 
 const { addProduct,updateProduct,getAllProduct,getProductById,deleteProduct,updateStatus,updateQuantity,updateFeaturedStatus,getProductsByCategory,getProducrBySlug,featuredProduct,offeredproduct } = require('../controllers/EcommerceController/ProductController');
 // const { createReview,updateReview,deleteReview,hideReviewgetAllReviews }= require('../controllers/EcommerceController/ProductReviewController');
-const {createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
-const {addStory,addSubStory,getSubStoryById,updateStory,updateSubStory,updateStoryStatus,deleteStory,addStoryCategory,updateStoryCategory,deleteStoryCategory,getStoryCategoryById,getStoryData,getSubStoryData,getStoryCategory,getAllStoryCategories,getActiveStoryCategory,updateStoryCategoryStatus,updateSubStoryStatus,getAllStories,getAllActiveStories} = require("../controllers/storyController");
-const {createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updateCommission} = require("../controllers/SettingController");
+const { createOrder,updateOrderPayment,geteStoreOrder,geteStoreAllOrder,updateOrderStatus,updateMultipleOrderStatuses,getAllOrderUserId}= require("../controllers/EcommerceController/EcommerceOrderController");
+const { addStory,addSubStory,getSubStoryById,updateStory,updateSubStory,updateStoryStatus,deleteStory,addStoryCategory,updateStoryCategory,deleteStoryCategory,getStoryCategoryById,getStoryData,getSubStoryData,getStoryCategory,getAllStoryCategories,getActiveStoryCategory,updateStoryCategoryStatus,updateSubStoryStatus,getAllStories,getAllActiveStories} = require("../controllers/storyController");
+const { createPanditRange,getPanditRange,updatePanditRange,createCommision,getCommission,updateCommission} = require("../controllers/SettingController");
 const { loginPartner,registerPartner } = require("../controllers/partnerController");
 const { createBhavyaAyojan,getBhavyaAyojan,getBhavyaAyojanByID,cancelBhavyaAyojanByID,getBhavyaAyojanByUserID } = require("../controllers/bhavyaAyojanController");
+const { addParamarsha,updateParamarsha,deleteParamarsha,updateparamarshStatus,getAllParamarsha,getActiveParamarshas,getParamarshaById} = require("../controllers/paramarshaController");
+const { addparamarshaRequest,confirmparamarshaPayment,updateparamarshaRequest,deleteparamarshaRequest,assignparamarshaPandit,updateparamarshaStatus,getAllparamarshaRequests,getparamarshaRequestsByUserId,getparamarshaRequestDetails} = require("../controllers/paramarshaRequestController");
+const { createKundali,createKundaliMatching,getAllKundalis,getKundaliById,updateKundali,cancelKundali,deleteKundali,getAllMatchingRequests,getMatchingById,updateMatchingDetails,deleteMatchingRequest,updateTransactionStatus,getKundalisByUserId,getMatchingsByUserId } = require("../controllers/kundaliController");
+const { createAyojan,getAllAyojans,getAyojanById,getAyojanBySlug,updateAyojan,deleteAyojan,toggleStatus} = require("../controllers/bhavyaAyojanListController");
+
 // Define other routes (existing ones)
 
 router.post('/signin', signin);
@@ -262,11 +267,58 @@ router.get('/brahman-bhoj/user/:userId',authenticateToken,getBrahmanBhojByuserID
 // Brahman Bhoj
 // Bhavya ayojan
 
+router.post('/bhavya-ayojan/create-ayojan', createAyojan);
+router.get('/bhavya-ayojan/ayojan-list', getAllAyojans);
+router.get('/bhavya-ayojan/ayojan/:id', getAyojanById);
+router.get('/bhavya-ayojan/ayojan-slug/:slug', getAyojanBySlug);
+router.put('/bhavya-ayojan/update-ayojan/:id', updateAyojan);
+router.delete('/bhavya-ayojan/delete-ayojan/:id', deleteAyojan);
+router.patch('/bhavya-ayojan/update-status/:id', toggleStatus);
+
+
+
 router.post('/bhavya-ayojan/create',authenticateToken ,createBhavyaAyojan);
 router.get('/bhavya-ayojan/all', authenticateToken,getBhavyaAyojan);
 router.get('/bhavya-ayojan/:id',authenticateToken ,getBhavyaAyojanByID);
 router.put('/bhavya-ayojan/cancel/:id', authenticateToken,cancelBhavyaAyojanByID);
 router.get('/bhavya-ayojan/user-id/:userId',authenticateToken,getBhavyaAyojanByUserID);
-
 // Bhavya ayojan
+
+// Paramarsh
+router.post('/paramarsha/add', authenticateToken, addParamarsha);
+router.put('/paramarsha/update/:id', authenticateToken, updateParamarsha);
+router.delete('/paramarsha/delete/:id',authenticateToken, deleteParamarsha);
+router.patch('/paramarsha/status/:id',authenticateToken, updateparamarshStatus);
+router.get('/paramarsha/all',authenticateToken, getAllParamarsha);
+router.get('/paramarsha/active',authenticateToken, getActiveParamarshas);
+router.get('/paramarsha/:id',authenticateToken, getParamarshaById);
+
+router.post("/paramarsha/request-add",authenticateToken, addparamarshaRequest);
+router.patch("/paramarsha/request-confirm-payment/:id",authenticateToken, confirmparamarshaPayment);
+router.put("/paramarsha/request-update/:id",authenticateToken, updateparamarshaRequest);
+router.delete("/paramarsha/request-delete/:id",authenticateToken, deleteparamarshaRequest);
+router.patch("/paramarsha/request-assign-pandit/:id",authenticateToken, assignparamarshaPandit);
+router.patch("/paramarsha/request-status/:id",authenticateToken, updateparamarshaStatus);
+router.get("/paramarsha/request/all",authenticateToken, getAllparamarshaRequests);
+router.get("/paramarsha/user/:userId",authenticateToken, getparamarshaRequestsByUserId);
+router.get("/paramarsha/details/:id",authenticateToken, getparamarshaRequestDetails);
+
+// Kundali
+
+router.post("/kundali/create-kundali",authenticateToken,createKundali);
+router.post("/kundali/kundali-matching",authenticateToken,createKundaliMatching);
+router.get("/kundali/get-all",authenticateToken,getAllKundalis);
+router.get("/kundali/get-kundali/:id",authenticateToken,getKundaliById)
+router.put("/kundali/update-kundali/:id",authenticateToken,updateKundali);
+router.put("/kundali/cancel-request/:id",authenticateToken,cancelKundali);
+router.delete("/kundali/delete/:id",authenticateToken,deleteKundali);
+router.get("/kundali/get-matching",authenticateToken,getAllMatchingRequests);
+router.get("/kundali/get-match-by/:id",authenticateToken,getMatchingById);
+router.put("/kundali/update-matching-details/:id",authenticateToken,updateMatchingDetails);
+router.delete("/kundali/delete-matching-request/:id",authenticateToken,deleteMatchingRequest);
+router.put("/kundali/update-transcation/:id",authenticateToken,updateTransactionStatus);
+router.get("/kundali/get-kundalis-user/:id",authenticateToken,getKundalisByUserId);
+router.get("/kundali/get-matching-user/:id",authenticateToken,getMatchingsByUserId);
+
+
 module.exports = router;

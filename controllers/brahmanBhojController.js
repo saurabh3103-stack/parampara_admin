@@ -99,7 +99,7 @@ exports.cancelBrahmanByID = async (req, res) => {
         const { id } = req.params;
         const updatedBhoj = await BrahmanBhoj.findByIdAndUpdate(
             id,
-            { status: 2 }, 
+            { bookingStatus: 2 }, 
             { new: true } 
         );
         if (!updatedBhoj) {

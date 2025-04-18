@@ -390,7 +390,7 @@ exports.bhajanMandaliCity = async (req, res) => {
 
 exports.bhajanMandaliByCity = async (req,res)=>{
     try{
-        const city = req.paramscityName;
+        const city = req.params.cityName;
         console.log(city);
         const bhajanMandaliCities = await BhajanMandal.find({'mandali_address.city':city});
         return res.status(200).json({

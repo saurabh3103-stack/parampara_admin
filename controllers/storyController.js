@@ -29,14 +29,14 @@ exports.addStoryCategory = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
-      return res.status(500).json({ error: "Image upload failed", details: err.message });
+      return res.status(500).json({ error: "Image upload failed", details: err.message,status:0 });
     }
 
     try {
       const { title, description, metaTitle, metaKeywords, metaDescription,language } = req.body;
 
       if (!title) {
-        return res.status(400).json({ error: "Category title is required" });
+        return res.status(400).json({ error: "Category title is required",status:0});
       }
 
       const slug = slugify(title, { lower: true, strict: true });
@@ -68,7 +68,7 @@ exports.addStoryCategory = async (req, res) => {
 
     } catch (error) {
       console.error("Error in addStoryCategory:", error);
-      res.status(500).json({ error: "Error creating category", details: error.message });
+      res.status(500).json({ error: "Error creating category", details: error.message,status:0 });
     }
   });
 };
@@ -87,7 +87,7 @@ exports.updateStoryCategory = async (req, res) => {
     } = req.body;
     const category = await StoryCategory.findById(id);
     if (!category) {
-      return res.status(404).json({ error: "Category not found" });
+      return res.status(404).json({ error: "Category not found",status:0 });
     }
 
     // Update fields only if they're provided
@@ -103,11 +103,11 @@ exports.updateStoryCategory = async (req, res) => {
 
     await category.save(); // ✅ Save the instance, not the model
 
-    res.status(200).json({ message: "Category updated successfully!", category });
+    res.status(200).json({ message: "Category updated successfully!", category,status:1 });
 
   } catch (error) {
     console.error("Error updating category:", error);
-    res.status(500).json({ error: "Error updating category" });
+    res.status(500).json({ error: "Error updating category",status:0 });
   }
 };
 
@@ -117,12 +117,12 @@ exports.deleteStoryCategory = async (req, res) => {
     const { id } = req.params;
     const deleted = await StoryCategory.findByIdAndDelete(id);
     if (!deleted) {
-      return res.status(404).json({ error: "Category not found" });
+      return res.status(404).json({ error: "Category not found",status:1 });
     }
     res.json({ message: "Category deleted successfully!" });
   } catch (error) {
     console.error('Error deleting category:', error);
-    res.status(500).json({ error: "Error deleting category" });
+    res.status(500).json({ error: "Error deleting category",status:0 });
   }
 };
 
@@ -133,15 +133,15 @@ exports.updateStoryCategoryStatus = async (req, res) => {
     const { status } = req.body;
 
     if (!["active", "inactive"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status value" });
+      return res.status(400).json({ error: "Invalid status value" ,status:0});
     }
 
     const category = await Category.findByIdAndUpdate(id, { status }, { new: true });
-    if (!category) return res.status(404).json({ error: "Category not found" });
+    if (!category) return res.status(404).json({ error: "Category not found",status:0 });
 
-    res.status(200).json({ message: "Category status updated!", category });
+    res.status(200).json({ message: "Category status updated!", category ,status:1});
   } catch (error) {
-    res.status(500).json({ error: "Error updating category status" });
+    res.status(500).json({ error: "Error updating category status",status:0 });
   }
 };
 
@@ -211,16 +211,16 @@ exports.updateStory = async (req, res) => {
     const { title, description, metaTitle, metaKeywords, metaDescription, status } = req.body;
 
     const story = await Story.findById(id);
-    if (!story) return res.status(404).json({ error: "Story not found" });
+    if (!story) return res.status(404).json({ error: "Story not found",status:0 });
 
     if (title) story.slug = slugify(title, { lower: true, strict: true }) + `-${Date.now()}`;
     if (req.file) story.image = `/uploads/story/${req.file.filename}`;
     Object.assign(story, { title, description, metaTitle, metaKeywords, metaDescription, status });
 
     await story.save();
-    res.status(200).json({ message: "Story updated successfully!", story });
+    res.status(200).json({ message: "Story updated successfully!", story,status:1 });
   } catch (error) {
-    res.status(500).json({ error: "Error updating story" });
+    res.status(500).json({ error: "Error updating story",status:0 });
   }
 };
 
@@ -231,7 +231,7 @@ exports.deleteStory = async (req, res) => {
     await Story.findByIdAndDelete(id);
     res.json({ message: "Story deleted successfully!",status:1 });
   } catch (error) {
-    res.status(500).json({ error: "Error deleting story" });
+    res.status(500).json({ error: "Error deleting story",status:0 });
   }
 };
 
@@ -241,14 +241,14 @@ exports.updateStoryStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     if (!["active", "inactive"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status value" });
+      return res.status(400).json({ error: "Invalid status value" ,status:0});
     }
     const story = await Story.findByIdAndUpdate(id, { status }, { new: true });
-    if (!story) return res.status(404).json({ error: "Story not found" });
+    if (!story) return res.status(404).json({ error: "Story not found",status:0 });
 
-    res.status(200).json({ message: "Story status updated!", story });
+    res.status(200).json({ message: "Story status updated!", story,status:1 });
   } catch (error) {
-    res.status(500).json({ error: "Error updating story status" });
+    res.status(500).json({ error: "Error updating story status",status:0 });
   }
 };
 
